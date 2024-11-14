@@ -99,7 +99,12 @@ form.sign-in-form p {
   right: 15px;
   top: 50%; 
   transform: translateY(-50%); 
-  pointer-events: none;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.input-field .icon:hover {
+  opacity: 0.8;
 }
 
 .input-field input {
@@ -162,9 +167,9 @@ form.sign-in-form p.social-text::after {
   justify-content: center;
   align-items: center;
   margin: 0 0.45rem;
-  color: #333;
+  color: #000;
   border-radius: 50%;
-  border: 1px solid #333;
+  border: 1px solid #000;
   text-decoration: none;
   font-size: 1.1rem;
   transition: 0.3s;

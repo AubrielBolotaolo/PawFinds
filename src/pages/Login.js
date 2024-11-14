@@ -1,30 +1,62 @@
 import React, { useState } from "react";
 import {Icon} from '@iconify/react';
+import { Toaster, toast } from 'sonner';
 
 function Login() {
   const [signUpMode, setSignUpMode] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleBackClick = () => {
-    window.location.reload(); // This will refresh the page and return to landing
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
+
+  const validateEmail = (email) => {
+    if (!email.endsWith('@gmail.com')) {
+        toast.error('Please use a valid Gmail address');
+        return false;
+    }
+    return true;
+};
+
+const validatePassword = (password) => {
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters long');
+        return false;
+    }
+    return true;
+};
+
+const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
+
+    if (isEmailValid && isPasswordValid) {
+        toast.success('Login successfully!');
+    }
+};
 
   return (
     <div className="login-page-container">
       <div className={`container ${signUpMode ? "sign-up-mode" : ""}`}>
         <div className="forms-container">
           <div className="signin-signup">
+            <Toaster position="bottom-right" richColors/>
             {/* Sign-In Form */}
-            <form action="#" className="sign-in-form">
+            <form action="#" className="sign-in-form" onSubmit={handleSubmit}>
               <h2>LOGIN NOW</h2>
               <p>Welcome back, Fur Parent! Get started.</p>
 
               <div className="input-field">
-                <input type="email" placeholder="Email" />
-                <Icon icon="mdi:email" className="icon"/>
+                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => validateEmail(email)}/>
+                <Icon icon="mdi:email" className="icon" style={{pointerEvents: 'none'}}/>
               </div>
               <div className="input-field">
-                <input type="password" placeholder="Password" />
-                <Icon icon="mdi:eye" className="icon"/>
+                <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} onBlur={() => validatePassword(password)}/>
+                <Icon icon={showPassword ? "mdi:eye" : "mdi:eye-off"} className="icon" onClick={togglePasswordVisibility}/>
               </div>
 
               <p className="forgot-password">Forgot Password?</p>
