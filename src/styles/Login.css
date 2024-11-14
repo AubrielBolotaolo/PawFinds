@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
 * {
   margin: 0;
@@ -6,19 +7,15 @@
   box-sizing: border-box;
 }
 
-body,
-input {
-  font-family: "Poppins", sans-serif;
-}
-
 .container {
   position: relative;
-  width: 850px;
-  min-height: 600px;
-  background-color: #fff;
-  border-radius: 15px;
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  background-color: #76B9F0;
   overflow: hidden;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .forms-container {
@@ -60,33 +57,49 @@ form.sign-up-form {
 
 form.sign-in-form {
   z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  margin-left: 90px;
 }
 
-.title {
-  font-size: 2.2rem;
-  color: #444;
-  margin-bottom: 10px;
+form.sign-in-form h2 {
+  font-size: 2.5rem;
+  color: #000;
+  margin-bottom: 1px;
+  font-weight: 500;
+  font-family: 'Anton', sans-serif;
+}
+
+form.sign-in-form p {
+  font-size: 1.2rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  color: #000;
+  margin-bottom: 40px;
+  font-weight: 500;
 }
 
 .input-field {
-  max-width: 380px;
+  max-width: 430px;
   width: 100%;
-  background-color: #f0f0f0;
+  background-color: #fff;
   margin: 10px 0;
   height: 55px;
-  border-radius: 55px;
-  display: grid;
-  grid-template-columns: 15% 85%;
-  padding: 0 0.4rem;
+  border-radius: 12px;
+  border: 1px solid #000;
+  display: flex;  
+  align-items: center;  
+  padding: 0 15px; 
   position: relative;
 }
 
-.input-field i {
-  text-align: center;
-  line-height: 55px;
-  color: #acacac;
-  transition: 0.5s;
-  font-size: 1.1rem;
+.input-field .icon {
+  width: 22px;
+  height: 22px;
+  position: absolute;
+  right: 15px;
+  top: 50%; 
+  transform: translateY(-50%); 
+  pointer-events: none;
 }
 
 .input-field input {
@@ -97,21 +110,49 @@ form.sign-in-form {
   font-weight: 600;
   font-size: 1.1rem;
   color: #333;
+  width: calc(100% - 40px); 
 }
 
 .input-field input::placeholder {
+  font-family: 'Barlow Condensed', sans-serif;
   color: #aaa;
   font-weight: 500;
 }
 
-.social-text {
+form.sign-in-form p.forgot-password {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+form.sign-in-form p.forgot-password:hover {
+  color: #fff;
+  cursor: pointer;
+}
+
+form.sign-in-form p.social-text {
   padding: 0.7rem 0;
   font-size: 1rem;
+  position: relative;
+  margin: 10px -43px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+form.sign-in-form p.social-text::before,
+form.sign-in-form p.social-text::after {
+  content: '';
+  width: 200px;
+  height: .9px;
+  background-color: #000;
+  margin: 10px 10px;
 }
 
 .social-media {
   display: flex;
   justify-content: center;
+  margin: 0px 95px;
 }
 
 .social-icon {
@@ -135,22 +176,22 @@ form.sign-in-form {
 }
 
 .btn {
-  width: 150px;
-  background-color: #5995fd;
+  width: 160px;
+  background-color: #000;
   border: none;
-  outline: none;
-  height: 49px;
-  border-radius: 49px;
+  height: 50px;
+  border-radius: 25px;
   color: #fff;
-  text-transform: uppercase;
-  font-weight: 600;
-  margin: 10px 0;
+  margin: 5px 135px;
   cursor: pointer;
-  transition: 0.5s;
+  transition: 0.2s;
+  font-size: 15px;
+  align-items: center;
 }
 
 .btn:hover {
-  background-color: #4d84e2;
+  background-color: #fff;
+  color: #000;
 }
 .panels-container {
   position: absolute;
@@ -165,8 +206,8 @@ form.sign-in-form {
 .container:before {
   content: "";
   position: absolute;
-  height: 2000px;
-  width: 2000px;
+  height: 3000px;
+  width: 3000px;
   top: -10%;
   right: 48%;
   transform: translateY(-50%);
@@ -274,8 +315,9 @@ form.sign-in-form {
 
 @media (max-width: 870px) {
   .container {
-    min-height: 800px;
+    min-height: 100vh;
     height: 100vh;
+    padding: 0;
   }
   .signin-signup {
     width: 100%;
@@ -412,6 +454,7 @@ form.sign-in-form {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    padding: 0;
 }
 
 .back-to-home {

@@ -48,7 +48,11 @@
     height: 50px; 
     cursor: pointer; /* Change cursor to pointer on hover */
     transition: transform 0.3s ease;
-    padding: 5rem; 
+  }
+
+  .icon-container {
+    display: flex;
+    align-items: center;
   }
 
 /*------- Home ---------*/
@@ -74,10 +78,11 @@
     font-family: 'Anton', sans-serif;
     font-weight: 500;
     font-size: 35px;
-    line-height: 30px;
+    line-height: 60px;
+    margin-top: -40px;
   }
   .home-content p {
-    line-height: 5px;
+    line-height: 23px;
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 500;
     font-size: 21px;
@@ -92,17 +97,24 @@
   .button {
     background-color: #000;
     color: #fff;
-    border: 10;
-    border-color: #fff;
+    border: none;
     border-radius: 25px;
     padding: .8rem 2rem;
     cursor: pointer;
     margin-top: 8%;
     font-size: 15px;
     transition: transform 0.3s ease;
+    z-index: 2;
+    position: relative;
+  }
+  .button:hover {
+    color: #000;
+    transform: scale(1.05);  
+    background-color: #fff; 
   }
   .home-curve-bottom {
     position: absolute;
+    pointer-events: none;
     bottom: 0;
     width: 100%;
     height: auto;
@@ -145,8 +157,8 @@
     border-radius: 10px;
     padding: 2rem;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 250px;
-    height: 350px;
+    width: 300px;
+    height: 400px;
     position: relative;
     background-size: cover;
     background-position: center;
@@ -198,7 +210,8 @@
   max-width: 500px;
   color: #000;
   margin-right: 20px;
-  padding: 15rem;
+  padding: -10rem;
+  margin-left: 15rem;
 }
 
 .about-content h2 {
@@ -278,7 +291,7 @@
 
 .team-intro-container p {
   font-size: 15px;
-  margin-top: -10px;
+  margin-top: 1px;
 }
 
 .contact-images {

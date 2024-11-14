@@ -25,7 +25,7 @@ import Image2 from './assets/about-1.png';
 /* Contact */
 import Image3 from './assets/contact-1.png';
 
-function Navbar() {
+function Navbar({onLoginClick}) {
     const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {
@@ -55,23 +55,21 @@ function Navbar() {
                 <li><a href="#about">About</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul> 
-            <a href="/login">
-                <img src={Icon1} alt="Login-Icon" className="icon"/>
-            </a>
+            <div className='icon-container'>
+              <img src={Icon1} alt="Login-Icon" className="icon" onClick={onLoginClick}/>
+            </div>
         </nav>
     );
 }
 
-function Home() {
+function Home({onLoginClick}) {
     return (
         <section className="home" id="home">
             <div className="home-content">
                 <h1>Your Best Option for Pet Care Solution</h1>
                 <p>Instantly connects you to the nearest vet clinic, ensuring your</p>
                 <p>pets get the care they need, right when they need it.</p>
-                <a href="/login">
-                    <button className="button">Get Started</button>
-                </a>
+                <button className="button" onClick={onLoginClick}>Get Started</button>
             </div>
             <div className="home-images">
                 <img src={Image1} alt="Dog and Cat" />
@@ -171,11 +169,11 @@ function Contact() {
     );
 }
 
-function LandingPage() {
+function LandingPage({ onLoginClick }) {
     return (
         <div>
-            <Navbar />
-            <Home />
+            <Navbar onLoginClick={onLoginClick} />
+            <Home onLoginClick={onLoginClick} />
             <Offers />
             <About />
             <Contact />
