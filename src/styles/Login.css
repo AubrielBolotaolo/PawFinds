@@ -53,6 +53,8 @@ form {
 form.sign-up-form {
   opacity: 0;
   z-index: 1;
+  align-items: flex-start;
+  margin-left: 90px;
 }
 
 form.sign-in-form {
@@ -71,6 +73,22 @@ form.sign-in-form h2 {
 }
 
 form.sign-in-form p {
+  font-size: 1.2rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  color: #000;
+  margin-bottom: 40px;
+  font-weight: 500;
+}
+
+form.sign-up-form h2 {
+  font-size: 2.5rem;
+  color: #000;
+  margin-bottom: 1px;
+  font-weight: 500;
+  font-family: 'Anton', sans-serif;
+}
+
+form.sign-up-form p {
   font-size: 1.2rem;
   font-family: 'Barlow Condensed', sans-serif;
   color: #000;
@@ -99,12 +117,12 @@ form.sign-in-form p {
   right: 15px;
   top: 50%; 
   transform: translateY(-50%); 
+  transition: opacity 0.2s;
   cursor: pointer;
-  transition: opacity 0.3s;
 }
 
 .input-field .icon:hover {
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
 .input-field input {
@@ -135,51 +153,6 @@ form.sign-in-form p.forgot-password:hover {
   cursor: pointer;
 }
 
-form.sign-in-form p.social-text {
-  padding: 0.7rem 0;
-  font-size: 1rem;
-  position: relative;
-  margin: 10px -43px;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-form.sign-in-form p.social-text::before,
-form.sign-in-form p.social-text::after {
-  content: '';
-  width: 200px;
-  height: .9px;
-  background-color: #000;
-  margin: 10px 10px;
-}
-
-.social-media {
-  display: flex;
-  justify-content: center;
-  margin: 0px 95px;
-}
-
-.social-icon {
-  height: 46px;
-  width: 46px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0 0.45rem;
-  color: #000;
-  border-radius: 50%;
-  border: 1px solid #000;
-  text-decoration: none;
-  font-size: 1.1rem;
-  transition: 0.3s;
-}
-
-.social-icon:hover {
-  color: #4481eb;
-  border-color: #4481eb;
-}
-
 .btn {
   width: 160px;
   background-color: #000;
@@ -198,6 +171,139 @@ form.sign-in-form p.social-text::after {
   background-color: #fff;
   color: #000;
 }
+
+.phone-input-container {
+  display: flex !important;
+  gap: 8px;
+  position: relative;
+}
+
+.country-select {
+  min-width: 70px;
+  padding: 0 10px 0 4px;
+  border: none;
+  background: none;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+
+.country-select option {
+  background-color: white;
+  color: #333;
+  padding: 10px;
+}
+
+.phone-input {
+  border: none !important;
+  background: none !important;
+  outline: none !important;
+  padding-left: 5px !important;
+  flex: 1;
+}
+
+/* Adjust the icon position for phone input */
+.phone-input-container .icon {
+  right: 15px;
+}
+
+/* Style for the separator between country code and phone number */
+.phone-input-container::after {
+  content: '';
+  position: absolute;
+  left: 95px;  /* Adjust based on your country select width */
+  top: 50%;
+  transform: translateY(-50%);
+  height: 60%;
+  width: 1px;
+  background-color: #ddd;
+}
+
+.phone-input-container.invalid input {
+  color: #ff3333;
+}
+
+.phone-input {
+  /* ... existing styles ... */
+  transition: color 0.3s ease;
+}
+
+/* Optional: Add a helper text below the input */
+.phone-helper-text {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* --------------- Role -------------------- */
+.role-selection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.role-option {
+  padding: 20px;
+  border: 2px solid #e1e1e1;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.role-option:hover {
+  border-color: #000;
+  transform: translateY(-2px);
+}
+
+.role-option.selected {
+  border-color: #000;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.role-option .role-icon {
+  font-size: 2.5rem;
+  color: #333;
+}
+
+.role-option span {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.role-option p {
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+  margin: 0;
+}
+
+.continue-btn {
+  margin-top: 20px !important;
+  transition: all 0.3s ease;
+}
+
+.continue-btn.disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.continue-btn:not(.disabled):hover {
+  transform: translateY(-2px);
+}
+
+/* --------------- Panel ------------------- */
 .panels-container {
   position: absolute;
   height: 100%;
@@ -222,24 +328,44 @@ form.sign-in-form p.social-text::after {
   z-index: 6;
 }
 
-.image {
-  width: 100%;
-  transition: transform 1.1s ease-in-out;
+.dog-image {
+  transition: transform 0.9s ease-in-out;
   transition-delay: 0.4s;
+  width: 47%;
+  position: absolute;
+  bottom: 0;
+  right: 40%;
+  height: auto;
+  z-index: 0;
+  transform-origin: center;
+}
+
+.cat-image {
+  transition: transform 0.9s ease-in-out;
+  transition-delay: 0.4s;
+  width: 200%;
+  position: absolute;
+  top: 0;
+  right: 5%;
+  height: auto;
+  z-index: 0;
 }
 
 .panel {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-around;
+  align-items: flex-start;
+  justify-content: center;
   text-align: center;
   z-index: 6;
+  font-family: 'Barlow Condensed', sans-serif;
+  padding-left: 10%;
 }
 
 .left-panel {
   pointer-events: all;
   padding: 3rem 17% 2rem 12%;
+  
 }
 
 .right-panel {
@@ -247,35 +373,63 @@ form.sign-in-form p.social-text::after {
   padding: 3rem 12% 2rem 17%;
 }
 
-.panel .content {
-  color: #fff;
+.panel .left-content {
   transition: transform 0.9s ease-in-out;
   transition-delay: 0.6s;
+  padding: 0 0 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.panel .right-content {
+  transition: transform 0.9s ease-in-out;
+  transition-delay: 0.6s;
+  padding: 0 0 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .panel h3 {
-  font-weight: 600;
+  font-family: 'Anton', sans-serif;
+  font-weight: 500;
   line-height: 1;
-  font-size: 1.5rem;
+  font-size: 2rem;
+  color: #000;
+  text-align: left;
 }
 
 .panel p {
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   padding: 0.7rem 0;
+  color: #000;
+  text-align: left;
+  margin-bottom: 2rem;
 }
 
 .btn.transparent {
   margin: 0;
   background: none;
-  border: 2px solid #fff;
-  width: 130px;
-  height: 41px;
+  border: 2px solid #000;
+  width: 160px;
+  height: 45px;
   font-weight: 600;
   font-size: 0.8rem;
+  color: #000;
+  cursor: pointer;
+  z-index: 10;
+  position: relative;
 }
 
-.right-panel .image,
-.right-panel .content {
+.btn.transparent:hover {
+  transform: translateY(-2px);
+  background: #333;
+}
+
+.right-panel .dog-image,
+.right-panel .cat-image,
+.right-panel .right-content {
   transform: translateX(800px);
 }
 
@@ -286,8 +440,9 @@ form.sign-in-form p.social-text::after {
   right: 52%;
 }
 
-.container.sign-up-mode .left-panel .image,
-.container.sign-up-mode .left-panel .content {
+.container.sign-up-mode .left-panel .dog-image,
+.container.sign-up-mode .left-panel .cat-image,
+.container.sign-up-mode .left-panel .left-content {
   transform: translateX(-800px);
 }
 
@@ -305,9 +460,10 @@ form.sign-in-form p.social-text::after {
   z-index: 1;
 }
 
-.container.sign-up-mode .right-panel .image,
-.container.sign-up-mode .right-panel .content {
-  transform: translateX(0%);
+.container.sign-up-mode .right-panel .dog-image,
+.container.sign-up-mode .right-panel .cat-image,
+.container.sign-up-mode .right-panel .right-content {
+  transform: translateX(0);
 }
 
 .container.sign-up-mode .left-panel {
