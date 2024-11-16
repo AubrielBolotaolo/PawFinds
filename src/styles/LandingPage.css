@@ -53,6 +53,7 @@
   .icon-container {
     display: flex;
     align-items: center;
+    padding: 5rem;
   }
 
 /*------- Home ---------*/
@@ -78,11 +79,11 @@
     font-family: 'Anton', sans-serif;
     font-weight: 500;
     font-size: 35px;
-    line-height: 60px;
+    line-height: 30px;
     margin-top: -40px;
   }
   .home-content p {
-    line-height: 23px;
+    line-height: 5px;
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 500;
     font-size: 21px;
@@ -286,7 +287,7 @@
   font-family: 'Anton', sans-serif;
   font-size: 28px;
   font-weight: 500;
-  margin-top: 0; 
+  margin-bottom: 5px; 
 }
 
 .team-intro-container p {

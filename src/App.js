@@ -4,7 +4,7 @@ import './styles/LandingPage.css';
 import './styles/Login.css';
 
 import LandingPage from './pages/LandingPage';
-import Login from './pages/Login';
+import Login from './pages/components/Login';
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);

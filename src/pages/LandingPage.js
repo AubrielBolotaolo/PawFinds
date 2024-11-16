@@ -5,6 +5,7 @@ import 'swiper/css/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination} from 'swiper/modules';
 import {Icon} from '@iconify/react';
+import Login from './components/Login';
 
 /* Home */
 import Logo from './assets/logo.png';
@@ -169,14 +170,21 @@ function Contact() {
     );
 }
 
-function LandingPage({ onLoginClick }) {
+function LandingPage() {
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+    const handleLoginClick = () => {
+        setIsLoginModalOpen(true);
+      };
+
     return (
         <div>
-            <Navbar onLoginClick={onLoginClick} />
-            <Home onLoginClick={onLoginClick} />
+            <Navbar onLoginClick={handleLoginClick} />
+            <Home onLoginClick={handleLoginClick} />
             <Offers />
             <About />
             <Contact />
+            <Login isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
         </div>
     );
 }
