@@ -12,6 +12,16 @@ function Login({isOpen, onClose}) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('+63');
+  const [showClinicForm, setShowClinicForm] = useState(false);
+  const [clinicName, setClinicName] = useState('');
+  const [openingDays, setOpeningDays] = useState({ start: '', end: '' });
+  const [openingHours, setOpeningHours] = useState({ open: '', close: '' });
+  const [address, setAddress] = useState({
+    street: '',
+    barangay: '',
+    city: '',
+    zipCode: ''
+});
 
   const countryCodes = [
     { code: '+63', country: 'PH', length: 10 },
@@ -112,8 +122,12 @@ const handleRoleSelect = (role) => {
 };
 
 const handleContinue = () => {
-  if (selectedRole) {
+  if (selectedRole && !showSignUpForm) {
       setShowSignUpForm(true);
+  }
+
+  if (selectedRole === 'veterinarian' && showSignUpForm && !showClinicForm) {
+    setShowClinicForm(true);
   }
 };
 
@@ -168,9 +182,8 @@ if (!isOpen) return null;
                 <button type="submit" className="btn">Sign In</button>
               </div>
             </>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              {!showSignUpForm ? (
+
+          ) : !showSignUpForm ? (
                 <div className="signup-form">
                   <h2>REGISTER NOW</h2>
                   <p>Hi there, Fur Parent! Please create an account.</p>
@@ -191,8 +204,8 @@ if (!isOpen) return null;
                     <button className={`btn continue-btn ${!selectedRole ? 'disabled' : ''}`} onClick={handleContinue} disabled={!selectedRole}>Continue</button>
                   </div>
                 </div>
-          ) : (
-              <>
+
+          ) : showSignUpForm && !showClinicForm ? (
                 <div className="signup-form">
                   <h2>REGISTER NOW</h2>
                   <p>Hi there, Fur Parent! Please create an account.</p>
@@ -228,12 +241,76 @@ if (!isOpen) return null;
                         <Icon icon={showPassword ? "mdi:eye" : "mdi:eye-off"} className="icon"/>
                       </div>
                   
-                      <button type="submit" className="btn">{signUpMode ? 'Sign up' : 'Login'}</button>
+                    <button className="btn continue-btn" onClick={handleContinue}>Continue</button>
                   </div>
-                </>
-              )}
-              </form>
-            )}
+
+              ) : showClinicForm ? (
+                <div className="signup-form">
+                  <h2>CLINIC DETAILS</h2>
+                  <p>Please provide your clinic information</p>
+
+                  <div className="input-field">
+                    <input type="text" placeholder="Clinic Name" value={clinicName} onChange={(e) => setClinicName(e.target.value)}/>
+                  </div>
+
+                  <div className="day-input">
+                    <div className="input-field">
+                      <select value={openingDays.start} onChange={(e) => setOpeningDays({...openingDays, start: e.target.value})}>
+                        <option value="">Open Day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                      </select>
+                    </div>
+
+                    <span className="to-text">to</span>
+                    <div className="input-field">
+                      <select value={openingDays.end} onChange={(e) => setOpeningDays({...openingDays, end: e.target.value})}>
+                        <option value="">Open Day</option>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                      </select>
+                    </div>
+                  </div>
+
+                    <div className="time-inputs">
+                      <div className="input-field">
+                        <input type="time" placeholder="Opening Time" value={openingHours.open} onChange={(e) => setOpeningHours({...openingHours, open: e.target.value})}/>
+                      </div>
+
+                      <span className="to-text">to</span>
+                      <div className="input-field">
+                        <input type="time" placeholder="Closing Time" value={openingHours.close} onChange={(e) => setOpeningHours({...openingHours, close: e.target.value})}/>
+                      </div>
+                    </div>
+
+                    <div className="address-container">
+                      <div className="input-field">
+                        <input type="text" placeholder="Street" value={address.street} onChange={(e) => setAddress({...address, street: e.target.value})}/>
+                      </div>
+                      <div className="input-field">
+                        <input type="text" placeholder="Barangay" value={address.barangay} onChange={(e) => setAddress({...address, barangay: e.target.value})}/>
+                      </div>
+                      <div className="input-field">
+                        <input type="text" placeholder="Municipality/City" value={address.city} onChange={(e) => setAddress({...address, city: e.target.value})}/>
+                      </div>
+                      <div className="input-field">
+                        <input type="text" placeholder="Zip Code" value={address.zipCode} onChange={(e) => setAddress({...address, zipCode: e.target.value})}/>
+                      </div>
+                    </div>
+
+                    <button className="btn continue-btn" onClick={handleContinue}>Continue</button>
+                </div>
+              ) : null }
           </div>
         </div>
       <Toaster position="bottom-right" richColors />
