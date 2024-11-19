@@ -1,0 +1,133 @@
+{
+  "petOwners": [
+    {
+      "id": 1,
+      "email": "john@gmail.com",
+      "password": "password123",
+      "fullName": "John Doe",
+      "phoneNumber": "+639123456789",
+      "pets": [
+        {
+          "id": 1,
+          "name": "Max",
+          "type": "Dog",
+          "breed": "Golden Retriever",
+          "age": 3,
+          "medicalHistory": []
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "email": "sarah@gmail.com",
+      "password": "password456",
+      "fullName": "Sarah Smith",
+      "phoneNumber": "+639987654321",
+      "pets": [
+        {
+          "id": 1,
+          "name": "Luna",
+          "type": "Cat",
+          "breed": "Persian",
+          "age": 2,
+          "medicalHistory": []
+        }
+      ]
+    }
+  ],
+  
+  "veterinarians": [
+    {
+      "id": 1,
+      "email": "vetclinic1@gmail.com",
+      "password": "clinic123",
+      "fullName": "Dr. Mike Wilson",
+      "phoneNumber": "+639456789123",
+      "licenseNumber": "VET-2024-001",
+      "clinic": {
+        "name": "PawCare Veterinary Clinic",
+        "address": {
+          "street": "123 Main Street",
+          "barangay": "San Antonio",
+          "city": "Quezon City",
+          "zipCode": "1100"
+        },
+        "schedule": {
+          "days": {
+            "start": "Monday",
+            "end": "Saturday"
+          },
+          "hours": {
+            "open": "09:00",
+            "close": "18:00"
+          }
+        },
+        "services": [
+          "General Checkup",
+          "Vaccination",
+          "Surgery",
+          "Grooming"
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "email": "vetclinic2@gmail.com",
+      "password": "clinic456",
+      "fullName": "Dr. Emily Davis",
+      "phoneNumber": "+639123789456",
+      "licenseNumber": "VET-2024-002",
+      "clinic": {
+        "name": "Happy Pets Veterinary Clinic",
+        "address": {
+          "street": "456 Park Avenue",
+          "barangay": "Greenhills",
+          "city": "San Juan",
+          "zipCode": "1500"
+        },
+        "schedule": {
+          "days": {
+            "start": "Tuesday",
+            "end": "Sunday"
+          },
+          "hours": {
+            "open": "10:00",
+            "close": "19:00"
+          }
+        },
+        "services": [
+          "General Checkup",
+          "Vaccination",
+          "Dental Care",
+          "Laboratory Services"
+        ]
+      }
+    }
+  ],
+
+  "appointments": [
+    {
+      "id": 1,
+      "petOwnerId": 1,
+      "veterinarianId": 1,
+      "petId": 1,
+      "date": "2024-03-20",
+      "time": "14:00",
+      "service": "General Checkup",
+      "status": "scheduled",
+      "notes": "Annual checkup"
+    }
+  ],
+  
+  "medicalRecords": [
+    {
+      "id": 1,
+      "petId": 1,
+      "veterinarianId": 1,
+      "date": "2024-03-20",
+      "diagnosis": "Healthy",
+      "treatment": "Routine vaccination",
+      "nextAppointment": "2024-09-20"
+    }
+  ]
+} 

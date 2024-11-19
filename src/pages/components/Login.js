@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {Icon} from '@iconify/react';
 import { Toaster, toast } from 'sonner';
 
-function Login({isOpen, onClose}) {
+function Login({isOpen, onClose, onHomeScreenClick}) {
   const [signUpMode, setSignUpMode] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -75,71 +75,158 @@ const handlePhoneBlur = () => {
     setShowPassword(!showPassword);
   };
 
-  const validateEmail = (email) => {
+  const validateEmail = async (email) => {
     if (!email.endsWith('@gmail.com')) {
-        toast.error('Please use a valid email address.');
+      toast.error('Please use a valid Gmail address');
+      return false;
+    }
+
+    if (signUpMode) {
+      try {
+        // Check both collections for existing email
+        const [petOwnersRes, veterinariansRes] = await Promise.all([
+          fetch(`http://localhost:3001/petOwners?email=${email}`),
+          fetch(`http://localhost:3001/veterinarians?email=${email}`)
+        ]);
+
+        const petOwners = await petOwnersRes.json();
+        const veterinarians = await veterinariansRes.json();
+
+        if (petOwners.length > 0 || veterinarians.length > 0) {
+          toast.error('Email already exists');
+          return false;
+        }
+      } catch (error) {
+        console.error('Email validation error:', error);
         return false;
+      }
     }
     return true;
-};
+  };
 
-const validatePassword = (password) => {
+  const validatePassword = (password) => {
     if (password.length < 8) {
       toast.error('Password must be at least 8 characters long.');
         return false;
     }
     return true;
-};
+  };
 
-const handleSubmit = (e) => {
+  const handleSignUp = async (userData, userType) => {
+    try {
+      const endpoint = userType === 'pet-owner' ? 'petOwners' : 'veterinarians';
+      const response = await fetch(`http://localhost:3001/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData)
+      });
+
+      if (response.ok) {
+        toast.success('Registration successful!');
+        setSignUpMode(false);
+        // Clear form fields
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setPhoneNumber('');
+      } else {
+        toast.error('Registration failed');
+      }
+    } catch (error) {
+      toast.error('Error during registration');
+      console.error('Registration error:', error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (signUpMode) {
-      // Register validation
+    if (!signUpMode) {
+      const isEmailValid = await validateEmail(email);
+      const isPasswordValid = validatePassword(password);
+  
+      if (isEmailValid && isPasswordValid) {
+        try {
+          // Check both collections for the user
+          const [petOwnersRes, veterinariansRes] = await Promise.all([
+            fetch(`http://localhost:3001/petOwners?email=${email}`),
+            fetch(`http://localhost:3001/veterinarians?email=${email}`)
+          ]);
+
+          const petOwners = await petOwnersRes.json();
+          const veterinarians = await veterinariansRes.json();
+
+          const user = [...petOwners, ...veterinarians].find(u => u.email === email && u.password === password);
+
+          if (user) {
+            // Store user data in localStorage
+            localStorage.setItem('userRole', user.clinic ? 'veterinarian' : 'pet-owner');
+            localStorage.setItem('fullName', user.fullName);
+            localStorage.setItem('userId', user.id.toString());
+            localStorage.setItem('username', user.fullName.split(' ')[0]);
+
+            toast.success('Login successful!');
+            onClose();
+            onHomeScreenClick(email);
+          } else {
+            toast.error('Invalid email or password');
+          }
+        } catch (error) {
+          toast.error('Error during login');
+          console.error('Login error:', error);
+        }
+      }
+    }
+  };
+
+  const handleRoleSelect = (role) => {
+    setSelectedRole(role);
+  };
+
+  const handleContinue = () => {
+    if (selectedRole && !showSignUpForm) {
+      setShowSignUpForm(true);
+      return;
+    }
+
+    // Add validation for the signup form
+    if (showSignUpForm && !showClinicForm) {
       const isEmailValid = validateEmail(email);
       const isPasswordValid = validatePassword(password);
       const doPasswordsMatch = validatePasswordMatch();
       const isPhoneValid = validatePhoneNumber();
 
       if (isEmailValid && isPasswordValid && doPasswordsMatch && isPhoneValid) {
-          toast.success('Register Successfully!');
-          // Proceed with registration logic
+        if (selectedRole === 'veterinarian') {
+          setShowClinicForm(true);
+        }
       }
-  } else {
-      // Login validation
-      const isEmailValid = validateEmail(email);
-      const isPasswordValid = validatePassword(password);
+      return;
+    }
 
-      if (isEmailValid && isPasswordValid) {
-          toast.success('Login successfully!');
-          // Proceed with login logic
+    // Add validation for clinic form
+    if (showClinicForm) {
+      if (!clinicName || !openingDays.start || !openingDays.end || 
+          !openingHours.open || !openingHours.close || 
+          !address.street || !address.barangay || 
+          !address.city || !address.zipCode) {
+        toast.error('Please fill in all clinic details');
+        return;
       }
-  }
-};
+    }
+  };
 
-const handleRoleSelect = (role) => {
-  setSelectedRole(role);
-};
+  const validatePasswordMatch = () => {
+    if (confirmPassword && password !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return false;
+    }
+    return true;
+  };
 
-const handleContinue = () => {
-  if (selectedRole && !showSignUpForm) {
-      setShowSignUpForm(true);
-  }
-
-  if (selectedRole === 'veterinarian' && showSignUpForm && !showClinicForm) {
-    setShowClinicForm(true);
-  }
-};
-
-const validatePasswordMatch = () => {
-  if (confirmPassword && password !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return false;
-  }
-  return true;
-};
-
-if (!isOpen) return null;
+  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -179,7 +266,7 @@ if (!isOpen) return null;
                 </form>
 
                 <div className="forgot-password">Forgot Password?</div>
-                <button type="submit" className="btn">Sign In</button>
+                <button type="submit" className="btn" onClick={handleSubmit}>Sign In</button>
               </div>
             </>
 
@@ -205,6 +292,45 @@ if (!isOpen) return null;
                   </div>
                 </div>
 
+          ) : showSignUpForm && selectedRole === 'pet-owner' ? (
+            <div className="signup-form">
+              <h2>REGISTER NOW</h2>
+              <p>Hi there, Fur Parent! Please create an account.</p>
+
+              <form onSubmit={handleSubmit}>
+                  <div className="input-field">
+                      <input type="text" placeholder="Full Name"/>
+                      <Icon icon="mdi:user" className="icon" style={{pointerEvents:'none'}}/>
+                  </div>
+                  <div className="input-field">
+                      <input type="text" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => validateEmail(email)}/>
+                      <Icon icon="mdi:email" className="icon" style={{pointerEvents:'none'}}/>
+                  </div> 
+                  <div className="input-field phone-input-container">
+                    <div className="country-select-wrapper">
+                        <select className="country-select" value={countryCode} onChange={(e) => {setCountryCode(e.target.value); setPhoneNumber('');}}>
+                            {countryCodes.map((country) => (
+                                <option key={country.code} value={country.code}>
+                                    {country.country} {country.code}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <input type="tel" placeholder="Phone Number" value={phoneNumber} onChange={handlePhoneNumberChange} onBlur={handlePhoneBlur} className="phone-input" maxLength={countryCodes.find(c => c.code === countryCode).length}/>
+                    <Icon icon="mdi:phone" className="icon" style={{pointerEvents:'none'}}/>
+                  </div>
+                  <div className="input-field">
+                    <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} onBlur={() => validatePassword(password)}/>
+                    <Icon icon={showPassword ? "mdi:eye" : "mdi:eye-off"} className="icon" onClick={togglePasswordVisibility}/>
+                  </div>
+                  <div className="input-field">
+                    <input type={showPassword ? "text" : "password"} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} onBlur={validatePasswordMatch}/>
+                    <Icon icon={showPassword ? "mdi:eye" : "mdi:eye-off"} className="icon" onClick={togglePasswordVisibility}/>
+                  </div>
+                  
+                <button type="submit" className="btn">Signup</button>
+              </form>
+            </div>
           ) : showSignUpForm && !showClinicForm ? (
                 <div className="signup-form">
                   <h2>REGISTER NOW</h2>
@@ -238,7 +364,7 @@ if (!isOpen) return null;
                       </div>
                       <div className="input-field">
                         <input type={showPassword ? "text" : "password"} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} onBlur={validatePasswordMatch}/>
-                        <Icon icon={showPassword ? "mdi:eye" : "mdi:eye-off"} className="icon"/>
+                        <Icon icon={showPassword ? "mdi:eye" : "mdi:eye-off"} className="icon" onClick={togglePasswordVisibility}/>
                       </div>
                   
                     <button className="btn continue-btn" onClick={handleContinue}>Continue</button>

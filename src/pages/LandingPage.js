@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
@@ -171,11 +172,21 @@ function Contact() {
 }
 
 function LandingPage() {
+    const navigate = useNavigate();
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+    const [username, setUsername] = useState('');
 
     const handleLoginClick = () => {
         setIsLoginModalOpen(true);
       };
+
+    const handleHomeScreenClick = (email) => {
+        if (email) {
+            const name = email.split('@')[0];
+            setUsername(name);
+            navigate('/HomeScreen');
+        }
+    };
 
     return (
         <div>
@@ -184,7 +195,7 @@ function LandingPage() {
             <Offers />
             <About />
             <Contact />
-            <Login isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+            <Login isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onHomeScreenClick={handleHomeScreenClick}/>
         </div>
     );
 }
