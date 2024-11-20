@@ -6,6 +6,7 @@ import Image2 from './assets/logo.png';
 import { toast } from 'sonner';
 import PetScreen from './components/PetScreen';
 import AppointmentScreen from './components/AppointmentScreen';
+import LogScreen from './components/LogScreen';
 
 function HomeScreen() {
   const navigate = useNavigate();
@@ -13,13 +14,13 @@ function HomeScreen() {
   const [userRole, setUserRole] = useState('');
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeScreen, setActiveScreen] = useState('home');
+  const [activeScreen, setActiveScreen] = useState('dashboard');
   const navItems = [
     { id: 'home', icon: 'mdi:home', label: 'Home' },
     { id: 'pets', icon: 'mdi:paw', label: 'My Pets' },
     { id: 'appointment', icon: 'mdi:calendar', label: 'Book Appointment' },
     { id: 'map', icon: 'mdi:map-marker', label: 'Map' },
-    { id: 'log', icon: 'mdi:history', label: 'Logs' }
+    { id: 'logs', icon: 'mdi:calendar-clock', label: 'Appointment Logs' }
   ];
   const getPageTitle = () => {
     const currentPage = navItems.find(item => item.id === activeScreen);
@@ -111,6 +112,8 @@ function HomeScreen() {
           <PetScreen />
         ) : activeScreen === 'appointment' ? (
           <AppointmentScreen />
+        ) : activeScreen === 'logs' ? (
+          <LogScreen />
         ) : (
           <div className="welcome-card">
             <div className="welcome-text">

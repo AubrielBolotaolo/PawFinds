@@ -47,6 +47,15 @@
           "medicalHistory": []
         }
       ]
+    },
+    {
+      "id": "8e3b",
+      "fullName": "aubriel",
+      "email": "aubriel@gmail.com",
+      "password": "12345678",
+      "phoneNumber": "+639123456789",
+      "role": "pet-owner",
+      "createdAt": "2024-11-20T19:15:41.218Z"
     }
   ],
   "veterinarians": [
@@ -128,6 +137,34 @@
       "service": "General Checkup",
       "status": "scheduled",
       "notes": "Annual checkup"
+    },
+    {
+      "id": "89f9",
+      "petId": 1732116281882,
+      "clinicId": "1",
+      "userId": "1",
+      "service": "health",
+      "symptoms": [
+        "weight-loss"
+      ],
+      "date": "2024-11-20T18:46:58.239Z",
+      "time": "09:00",
+      "status": "pending",
+      "createdAt": "2024-11-20T18:53:05.439Z"
+    },
+    {
+      "id": "5637",
+      "petId": 1732116281882,
+      "clinicId": "2",
+      "userId": "1",
+      "service": "health",
+      "symptoms": [
+        "behavior-changes"
+      ],
+      "date": "2024-11-20T18:53:53.695Z",
+      "time": "11:11",
+      "status": "pending",
+      "createdAt": "2024-11-20T18:54:41.652Z"
     }
   ],
   "medicalRecords": [

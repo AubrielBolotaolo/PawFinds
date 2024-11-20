@@ -22,6 +22,10 @@ function Login({isOpen, onClose, onHomeScreenClick}) {
     city: '',
     zipCode: ''
 });
+const [fullName, setFullName] = useState('');
+const [showDocumentForm, setShowDocumentForm] = useState(false);
+const [document, setDocument] = useState(null);
+const [documentName, setDocumentName] = useState('');
 
   const countryCodes = [
     { code: '+63', country: 'PH', length: 10 },
@@ -143,7 +147,110 @@ const handlePhoneBlur = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!signUpMode) {
+    if (signUpMode) {
+      // Validation checks
+      const isEmailValid = await validateEmail(email);
+      const isPasswordValid = validatePassword(password);
+      const isPhoneValid = validatePhoneNumber();
+      
+      if (!isEmailValid || !isPasswordValid || !isPhoneValid) {
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+
+      if (!fullName.trim()) {
+        toast.error('Please enter your full name');
+        return;
+      }
+
+      // Create user data object based on role
+      const userData = {
+        fullName: fullName,
+        email: email,
+        password: password,
+        phoneNumber: `${countryCode}${phoneNumber}`,
+        role: selectedRole,
+        createdAt: new Date().toISOString()
+      };
+
+      // Add clinic details if veterinarian
+      if (selectedRole === 'veterinarian') {
+        if (!clinicName || !openingDays.start || !openingDays.end || 
+            !openingHours.open || !openingHours.close || 
+            !address.street || !address.barangay || 
+            !address.city || !address.zipCode) {
+          toast.error('Please fill in all clinic details');
+          return;
+        }
+
+        userData.clinic = {
+          name: clinicName,
+          schedule: {
+            days: {
+              start: openingDays.start,
+              end: openingDays.end
+            },
+            hours: {
+              open: openingHours.open,
+              close: openingHours.close
+            }
+          },
+          address: {
+            street: address.street,
+            barangay: address.barangay,
+            city: address.city,
+            zipCode: address.zipCode
+          }
+        };
+      }
+
+      try {
+        const endpoint = selectedRole === 'veterinarian' ? 'veterinarians' : 'petOwners';
+        const response = await fetch(`http://localhost:3001/${endpoint}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData)
+        });
+
+        if (!response.ok) {
+          throw new Error('Registration failed');
+        }
+
+        const newUser = await response.json();
+        toast.success('Registration successful!');
+        
+        // Reset form
+        setFullName('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setPhoneNumber('');
+        setClinicName('');
+        setOpeningDays({ start: '', end: '' });
+        setOpeningHours({ open: '', close: '' });
+        setAddress({
+          street: '',
+          barangay: '',
+          city: '',
+          zipCode: ''
+        });
+        
+        // Switch back to login mode
+        setSignUpMode(false);
+        setShowClinicForm(false);
+        setShowSignUpForm(false);
+
+      } catch (error) {
+        console.error('Registration error:', error);
+        toast.error('Registration failed. Please try again.');
+      }
+    } else {
       const isEmailValid = await validateEmail(email);
       const isPasswordValid = validatePassword(password);
   
@@ -186,44 +293,144 @@ const handlePhoneBlur = () => {
   };
 
   const handleContinue = () => {
-    if (selectedRole && !showSignUpForm) {
-      setShowSignUpForm(true);
-      return;
-    }
-
-    // Add validation for the signup form
-    if (showSignUpForm && !showClinicForm) {
-      const isEmailValid = validateEmail(email);
-      const isPasswordValid = validatePassword(password);
-      const doPasswordsMatch = validatePasswordMatch();
-      const isPhoneValid = validatePhoneNumber();
-
-      if (isEmailValid && isPasswordValid && doPasswordsMatch && isPhoneValid) {
-        if (selectedRole === 'veterinarian') {
-          setShowClinicForm(true);
-        }
+    if (showSignUpForm) {
+      // Validate first form
+      if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
+        toast.error('Please fill in all fields');
+        return;
       }
-      return;
-    }
-
-    // Add validation for clinic form
-    if (showClinicForm) {
-      if (!clinicName || !openingDays.start || !openingDays.end || 
-          !openingHours.open || !openingHours.close || 
-          !address.street || !address.barangay || 
-          !address.city || !address.zipCode) {
+      if (password !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+      if (!validatePhoneNumber()) {
+        return;
+      }
+      setShowSignUpForm(false);
+      setShowClinicForm(true);
+    } else if (showClinicForm) {
+      // Validate clinic form
+      if (!clinicName || 
+          !openingDays.start || 
+          !openingDays.end || 
+          !openingHours.open || 
+          !openingHours.close || 
+          !address.street || 
+          !address.barangay || 
+          !address.city || 
+          !address.zipCode) {
         toast.error('Please fill in all clinic details');
         return;
       }
+      setShowClinicForm(false);
+      setShowDocumentForm(true);
     }
   };
 
-  const validatePasswordMatch = () => {
-    if (confirmPassword && password !== confirmPassword) {
-        toast.error('Passwords do not match');
-        return false;
+  const handleDocumentChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        toast.error('Please upload a PDF file only');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error('File size should be less than 5MB');
+        return;
+      }
+      setDocument(file);
+      setDocumentName(file.name);
     }
-    return true;
+  };
+
+  const handleFinalSignup = async () => {
+    if (!document) {
+      toast.error('Please upload your veterinary license');
+      return;
+    }
+
+    try {
+      // Convert PDF to base64
+      const base64Document = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(document);
+      });
+
+      // Create veterinarian data object
+      const veterinarianData = {
+        fullName,
+        email,
+        password,
+        phoneNumber: `${countryCode}${phoneNumber}`,
+        role: 'veterinarian',
+        clinic: {
+          name: clinicName,
+          schedule: {
+            days: {
+              start: openingDays.start,
+              end: openingDays.end
+            },
+            hours: {
+              open: openingHours.open,
+              close: openingHours.close
+            }
+          },
+          address: {
+            street: address.street,
+            barangay: address.barangay,
+            city: address.city,
+            zipCode: address.zipCode
+          }
+        },
+        license: {
+          document: base64Document,
+          fileName: documentName,
+          uploadDate: new Date().toISOString()
+        },
+        createdAt: new Date().toISOString(),
+        status: 'pending' // for admin approval
+      };
+
+      const response = await fetch('http://localhost:3001/veterinarians', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(veterinarianData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Registration failed');
+      }
+
+      toast.success('Registration successful! Please wait for admin approval.');
+      
+      // Reset all form states
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+      setPhoneNumber('');
+      setClinicName('');
+      setOpeningDays({ start: '', end: '' });
+      setOpeningHours({ open: '', close: '' });
+      setAddress({
+        street: '',
+        barangay: '',
+        city: '',
+        zipCode: ''
+      });
+      setDocument(null);
+      setDocumentName('');
+      setShowDocumentForm(false);
+      setShowClinicForm(false);
+      setShowSignUpForm(false);
+      setSignUpMode(false);
+
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Registration failed. Please try again.');
+    }
   };
 
   if (!isOpen) return null;
@@ -299,7 +506,7 @@ const handlePhoneBlur = () => {
 
               <form onSubmit={handleSubmit}>
                   <div className="input-field">
-                      <input type="text" placeholder="Full Name"/>
+                      <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)}/>
                       <Icon icon="mdi:user" className="icon" style={{pointerEvents:'none'}}/>
                   </div>
                   <div className="input-field">
@@ -337,7 +544,7 @@ const handlePhoneBlur = () => {
                   <p>Hi there, Fur Parent! Please create an account.</p>
 
                   <div className="input-field">
-                    <input type="text" placeholder="Full Name" />
+                    <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)}/>
                     <Icon icon="mdi:user" className="icon" style={{pointerEvents:'none'}}/>
                   </div>
                   <div className="input-field">
@@ -435,6 +642,49 @@ const handlePhoneBlur = () => {
                     </div>
 
                     <button className="btn continue-btn" onClick={handleContinue}>Continue</button>
+                </div>
+              ) : showDocumentForm ? (
+                <div className="signup-form">
+                  <h2>UPLOAD LICENSE</h2>
+                  <p>Please upload your veterinary license (PDF format only)</p>
+
+                  <div className="document-upload">
+                    <div className="upload-container">
+                      <input
+                        type="file"
+                        id="document-upload"
+                        accept=".pdf"
+                        onChange={handleDocumentChange}
+                        style={{ display: 'none' }}
+                      />
+                      <label htmlFor="document-upload" className="upload-label">
+                        <Icon icon="mdi:file-upload" className="upload-icon" />
+                        <span>{documentName || 'Choose PDF file'}</span>
+                      </label>
+                    </div>
+                    {documentName && (
+                      <div className="file-info">
+                        <Icon icon="mdi:file-document" className="file-icon" />
+                        <span>{documentName}</span>
+                        <button 
+                          className="remove-file"
+                          onClick={() => {
+                            setDocument(null);
+                            setDocumentName('');
+                          }}
+                        >
+                          <Icon icon="mdi:close" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <button 
+                    className="btn signup-btn" 
+                    onClick={handleFinalSignup}
+                  >
+                    Sign Up
+                  </button>
                 </div>
               ) : null }
           </div>

@@ -23,25 +23,16 @@
   font-size: 16px;
 }
 
-.pets-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 24px 0;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
 .pet-card {
-  background: #f5f5f5;
+  background: #fff;
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid #e0e0e0;
+  border: 1px solid ;
   cursor: pointer;
-  position: relative;
-  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .pet-card:hover {
@@ -54,27 +45,16 @@
   background-color: #f0f7ff;
 }
 
-.pet-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.pet-image-container {
-  width: 80px;
-  height: 80px;
-  flex-shrink: 0;
-}
-
-.pet-image {
-  width: 100%;
-  height: 100%;
+.pet-card .pet-image {
+  width: 90%;
+  height: 90%;
+  aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 4px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .pet-info {
-  flex-grow: 1;
+  padding: 12px;
 }
 
 .pet-info p {
@@ -88,63 +68,11 @@
   margin-right: 4px;
 }
 
-.delete-button {
-  background: none;
-  border: none;
-  color: #dc3545;
-  cursor: pointer;
-  padding: 8px;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  opacity: 0.7;
-}
-
-.delete-button:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  gap: 12px;
-  margin: 24px 0;
-}
-
-.page-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #e0e0e0;
-}
-
-.page-dot.active {
-  background-color: #007bff;
-}
-
-.nav-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #007bff;
-  padding: 8px;
-}
-
-.nav-button:disabled {
-  color: #e0e0e0;
-  cursor: not-allowed;
-}
-
 .next-button {
   display: block;
   margin: 0 auto;
-  padding: 12px 32px;
-  background-color: #007bff;
+  padding: 12px 40px;
+  background-color: #000;
   color: white;
   border: none;
   border-radius: 6px;
@@ -172,31 +100,35 @@
   margin: 0;
 }
 
-.loading {
-  text-align: center;
-  padding: 20px;
-  color: #6c757d;
+.pets-swiper {
+  padding: 20px 40px;
+  margin: 20px 0;
 }
 
-.loading-container,
-.error-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.swiper-pagination {
+  position: relative;
+  margin-top: 20px;
 }
 
-.error-container {
-  color: #dc3545;
+.swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  background: #e0e0e0;
+  opacity: 1;
 }
 
-.loading-container {
+.swiper-pagination-bullet-active {
+  background: #007bff;
+}
+
+.swiper-button-prev,
+.swiper-button-next {
   color: #007bff;
+}
+
+.swiper-button-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (max-width: 600px) {
@@ -204,16 +136,453 @@
     flex-direction: column;
     text-align: center;
   }
+}
 
-  .pet-image-container {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto;
+/* Service Selection Styles */
+.service-selection {
+  text-align: center;
+}
+
+.service-options {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  margin: 32px 0;
+}
+
+.service-card {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 24px;
+  width: 240px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.service-card.selected {
+  border-color: #007bff;
+  background-color: #f0f7ff;
+}
+
+.service-icon {
+  font-size: 48px;
+  color: #007bff;
+  margin-bottom: 16px;
+}
+
+/* Symptoms Section Styles */
+.symptoms-section {
+  padding: 24px;
+}
+
+.symptoms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.symptom-box {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.symptom-box:hover {
+  background: #f0f0f0;
+}
+
+.symptom-box.selected {
+  background: #f0f7ff;
+  border-color: #007bff;
+}
+
+.symptom-box .description {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.symptoms-notes {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin: 24px 0;
+  resize: vertical;
+}
+
+@media (max-width: 768px) {
+  .service-options {
+    flex-direction: column;
+    align-items: center;
   }
 
-  .delete-button {
-    position: absolute;
-    top: 8px;
-    right: 8px;
+  .service-card {
+    width: 100%;
+    max-width: 300px;
   }
+}
+
+/* Clinic Selection Styles */
+.clinic-selection {
+  padding: 24px;
+}
+
+.clinics-swiper {
+  padding: 20px 40px;
+  margin: 20px 0;
+}
+
+.clinic-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 100%;
+  cursor: pointer;
+}
+
+.clinic-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.clinic-card.selected {
+  border: 2px solid #007bff;
+}
+
+.clinic-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.clinic-info {
+  padding: 16px;
+}
+
+.clinic-info h3 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.clinic-info p {
+  margin: 8px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.learn-more-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  padding: 8px 0;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.learn-more-btn:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .clinic-card {
+    max-width: 100%;
+  }
+  
+  .clinic-image {
+    height: 160px;
+  }
+}
+
+/* Schedule Booking Styles */
+.schedule-booking {
+  width: 100%;
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 24px;
+}
+
+.booking-section {
+  padding-right: 24px;
+}
+
+.calendar-container {
+  margin-bottom: 24px;
+}
+
+/* Calendar Styles */
+.react-calendar {
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  background: white;
+}
+
+.react-calendar__tile--active {
+  background: #007bff !important;
+  color: white;
+}
+
+.react-calendar__tile--disabled {
+  background-color: #f5f5f5;
+  color: #ccc;
+}
+
+/* Time Picker Styles */
+.time-picker-container {
+  margin: 24px 0;
+}
+
+.time-picker-container label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Selected Clinic Card Styles */
+.selected-clinic-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e0e0e0;
+}
+
+.selected-clinic-card h3 {
+  font-size: 20px;
+  color: #333;
+  margin-bottom: 16px;
+}
+
+.clinic-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.clinic-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.clinic-info h4 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.clinic-info p {
+  margin: 8px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+@media (max-width: 968px) {
+  .schedule-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-section {
+    padding-right: 0;
+  }
+}
+
+/* Confirmation Styles */
+.confirmation-section {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.confirmation-subtitle {
+  color: #666;
+  margin-bottom: 32px;
+}
+
+.appointment-summary {
+  background: #f5f5f5;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.date-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.date-block {
+  background: #007bff;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-align: center;
+  margin-right: 16px;
+  min-width: 80px;
+}
+
+.month {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.day {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.schedule-note {
+  color: #333;
+  font-size: 16px;
+}
+
+.appointment-details {
+  padding: 24px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.detail-item svg {
+  margin-right: 12px;
+  font-size: 20px;
+  color: #666;
+}
+
+.hours-note {
+  color: #666;
+  font-size: 14px;
+  margin-left: 8px;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+  justify-content: center;
+}
+
+.back-button,
+.confirm-button {
+  padding: 12px 32px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-button {
+  background: white;
+  border: 1px solid #007bff;
+  color: #007bff;
+}
+
+.back-button:hover {
+  background: #f0f7ff;
+}
+
+.confirm-button {
+  background: #007bff;
+  border: none;
+  color: white;
+}
+
+.confirm-button:hover {
+  background: #0056b3;
+}
+
+@media (max-width: 600px) {
+  .date-header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .date-block {
+    margin-right: 0;
+    margin-bottom: 12px;
+  }
+
+  .confirmation-actions {
+    flex-direction: column;
+  }
+
+  .back-button,
+  .confirm-button {
+    width: 100%;
+  }
+}
+
+/* Add these styles for the success section */
+.success-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.success-content {
+  max-width: 400px;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #28a745;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  font-size: 40px;
+}
+
+.view-appointments-button {
+  margin-top: 24px;
+  padding: 12px 24px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.view-appointments-button:hover {
+  background: #0056b3;
 }

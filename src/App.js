@@ -7,6 +7,7 @@ import './styles/HomeScreen.css';
 
 import LandingPage from './pages/LandingPage';
 import HomeScreen from './pages/HomeScreen';
+import LogScreen from './pages/components/LogScreen';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/HomeScreen" element={<HomeScreen />} />
+        <Route path="/logs" element={<LogScreen />} />
       </Routes>
     </Router>
   );
