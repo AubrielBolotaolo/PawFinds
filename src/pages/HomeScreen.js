@@ -5,6 +5,7 @@ import Image from './assets/home-2.png';
 import Image2 from './assets/logo.png';
 import { toast } from 'sonner';
 import PetScreen from './components/PetScreen';
+import AppointmentScreen from './components/AppointmentScreen';
 
 function HomeScreen() {
   const navigate = useNavigate();
@@ -107,22 +108,24 @@ function HomeScreen() {
       {/* Main Content */}
       <div className="main-content">
         {activeScreen === 'pets' ? (
-            <PetScreen />
-          ) : (
-            <div className="welcome-card">
-              <div className="welcome-text">
-                <h1>
-                  Welcome, {userRole === 'veterinarian' ? 'Dr.' : ''} {username}!
-                </h1>
-                <p>
-                  {userRole === 'veterinarian' 
-                    ? "Manage your clinic and appointments with ease."
-                    : "We are ready to help you care for your small companions with ease."}
-                </p>
-              </div>
-              <img src={Image} alt="Cat and Dog" className="pets-image" />
+          <PetScreen />
+        ) : activeScreen === 'appointment' ? (
+          <AppointmentScreen />
+        ) : (
+          <div className="welcome-card">
+            <div className="welcome-text">
+              <h1>
+                Welcome, {userRole === 'veterinarian' ? 'Dr.' : ''} {username}!
+              </h1>
+              <p>
+                {userRole === 'veterinarian' 
+                  ? "Manage your clinic and appointments with ease."
+                  : "We are ready to help you care for your small companions with ease."}
+              </p>
             </div>
-          )}
+            <img src={Image} alt="Cat and Dog" className="pets-image" />
+          </div>
+        )}
 
         {/* //Role-specific dashboard content
         {userRole === 'pet-owner' && userData?.pets && (

@@ -88,7 +88,7 @@
   position: relative;
   width: 100%;
   max-width: 300px;
-  margin: 10px 0;
+  margin: 5px 0;
 }
 
 .signup-form .input-field {
@@ -116,7 +116,7 @@
 .input-field .icon {
   position: absolute;
   right: -20%;
-  top: 50%;
+  top: 40%;
   transform: translateY(-50%);
   color: #000;
   cursor: pointer;

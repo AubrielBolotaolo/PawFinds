@@ -1,209 +1,417 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import {Icon} from '@iconify/react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
+import 'swiper/css/pagination';
 import '../../styles/PetScreen.css';
+import { toast } from 'sonner';
 
 const PetScreen = () => {
+  const fileInputRef = useRef(null);
   const [pets, setPets] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState('');
-  const [newPet, setNewPet] = useState({
-    name: '',
-    age: '',
-    species: '',
-    breed: '',
-    specialNeeds: '',
-    medicalHistory: '',
-    otherInfo: '',
-    image: ''
+  const [formData, setFormData] = useState({
+    petName: '',
+    petAge: '',
+    petBreed: '',
+    petSpecies: '',
+    petSpecialNeeds: '',
+    petMedicalHistory: '',
+    petOtherInfo: ''
   });
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [fileName, setFileName] = useState('');
 
   // Fetch pets when component mounts
   useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          toast.error('User not authenticated');
+          return;
+        }
+
+        const response = await fetch(`http://localhost:3001/petOwners/${userId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+        
+        const userData = await response.json();
+        setPets(userData.pets || []);
+      } catch (error) {
+        console.error('Error fetching pets:', error);
+        toast.error('Failed to load pets');
+      }
+    };
+
     fetchPets();
   }, []);
 
-  // Fetch all pets
-  const fetchPets = async () => {
-    try {
-      const response = await fetch('http://localhost:3002/pets');
-      if (!response.ok) {
-        throw new Error('Failed to fetch pets');
-      }
-      const data = await response.json();
-      setPets(data);
-    } catch (error) {
-      console.error('Error fetching pets:', error);
-    }
-  };
-
+  // Handle form input changes
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewPet(prev => ({
-      ...prev,
-      [name]: value
+    const { id, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [id]: value
     }));
   };
 
-  const handleImageChange = (e) => {
+  // Add new function to compress image
+  const compressImage = (base64String, maxWidth = 800) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = base64String;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Calculate new dimensions if width exceeds maxWidth
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Compress as JPEG with reduced quality
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        resolve(compressedBase64);
+      };
+    });
+  };
+
+  // Modified handleImageChange
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setSelectedImage(file);
-      // Create preview URL
-      const fileUrl = URL.createObjectURL(file);
-      setPreviewUrl(fileUrl);
+      if (file.size > 5000000) { // 5MB limit
+        toast.error('Image size should be less than 5MB');
+        return;
+      }
+
+      setFileName(file.name);
+
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const compressedImage = await compressImage(reader.result);
+          setSelectedImage(compressedImage);
+        } catch (error) {
+          console.error('Error compressing image:', error);
+          toast.error('Failed to process image');
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
+  // Modified handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     try {
-        // Create FormData object to handle file upload
-      const formData = new FormData();
-      
-      // Add all pet data to FormData
-      Object.keys(newPet).forEach(key => {
-        formData.append(key, newPet[key]);
-      });
-      
-      // Add the image file if selected
-      if (selectedImage) {
-        formData.append('image', selectedImage);
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        toast.error('User not authenticated');
+        return;
       }
 
-      formData.append('id', Date.now().toString());
+      // Validate required fields
+      if (!formData.petName || !formData.petAge || !formData.petBreed || !formData.petSpecies) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
 
-      const response = await fetch('http://localhost:3002/pets', {
-        method: 'POST',
+      const userResponse = await fetch(`http://localhost:3001/petOwners/${userId}`);
+      if (!userResponse.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+      
+      const userData = await userResponse.json();
+
+      const newPet = {
+        id: Date.now(),
+        name: formData.petName,
+        age: formData.petAge,
+        breed: formData.petBreed,
+        species: formData.petSpecies,
+        specialNeeds: formData.petSpecialNeeds,
+        medicalHistory: formData.petMedicalHistory,
+        otherInfo: formData.petOtherInfo,
+        image: selectedImage
+      };
+
+      const updatedPets = userData.pets ? [...userData.pets, newPet] : [newPet];
+
+      const updateResponse = await fetch(`http://localhost:3001/petOwners/${userId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...newPet,
-          id: Date.now(),
-          image: previewUrl || ''
-        }),
+          pets: updatedPets
+        })
       });
 
-      if (!response.ok) {
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update user data');
+      }
+
+      setPets(updatedPets);
+      toast.success('Pet added successfully!');
+      resetForm();
+      
+    } catch (error) {
+      console.error('Error adding pet:', error);
+      toast.error('Failed to add pet');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      petName: '',
+      petAge: '',
+      petBreed: '',
+      petSpecies: '',
+      petSpecialNeeds: '',
+      petMedicalHistory: '',
+      petOtherInfo: ''
+    });
+    setSelectedImage(null);
+    setImagePreviewUrl('');
+    
+    // If you have file input ref, reset it too
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDelete = async (petId) => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        toast.error('User not authenticated');
+        return;
+      }
+
+      // Get current user data
+      const userResponse = await fetch(`http://localhost:3001/petOwners/${userId}`);
+      if (!userResponse.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+      
+      const userData = await userResponse.json();
+
+      // Filter out the deleted pet
+      const updatedPets = userData.pets.filter(pet => pet.id !== petId);
+
+      // Update user data without the deleted pet
+      const updateResponse = await fetch(`http://localhost:3001/petOwners/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pets: updatedPets
+        })
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to delete pet');
+      }
+
+      // Update local state
+      setPets(updatedPets);
+      toast.success('Pet deleted successfully!');
+      
+    } catch (error) {
+      console.error('Error deleting pet:', error);
+      toast.error('Failed to delete pet');
+    }
+  };
+
+  const handleAddPet = async (newPet) => {
+    try {
+      const userFullName = localStorage.getItem('fullName');
+      
+      // First, get the current user's data
+      const response = await fetch(`http://localhost:3001/petOwners?fullName=${userFullName}`);
+      const owners = await response.json();
+      
+      if (owners.length === 0) {
+        toast.error('User not found');
+        return;
+      }
+
+      const owner = owners[0];
+      const updatedPets = [...(owner.pets || []), newPet];
+
+      // Update the user's pets array
+      const updateResponse = await fetch(`http://localhost:3001/petOwners/${owner.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pets: updatedPets
+        })
+      });
+
+      if (!updateResponse.ok) {
         throw new Error('Failed to add pet');
       }
 
-      // Refresh the pets list
-      fetchPets();
-      
-      // Reset form
-      setNewPet({
-        name: '',
-        age: '',
-        species: '',
-        breed: '',
-        specialNeeds: '',
-        medicalHistory: '',
-        otherInfo: '',
-        image: ''
-      });
-      setSelectedImage(null);
-      setPreviewUrl('');
+      setPets(updatedPets);
+      toast.success('Pet added successfully!');
     } catch (error) {
       console.error('Error adding pet:', error);
+      toast.error('Failed to add pet');
     }
+  };
+
+  // Add image preview component with loading state
+  const ImagePreview = ({ src }) => {
+    const [isLoading, setIsLoading] = useState(true);
+
+    return (
+      <div className="image-preview">
+        {isLoading && <div className="loading-spinner">Loading...</div>}
+        <img 
+          src={src} 
+          alt="Pet preview" 
+          onLoad={() => setIsLoading(false)}
+          style={{ display: isLoading ? 'none' : 'block' }}
+        />
+      </div>
+    );
   };
 
   return (
     <div className="pet-screen">
       <div className="pet-forms-container">
+        {/* Left side - Add Pet Form */}
         <div className="add-pet-form">
-          <h2>Add New Pet</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="image-upload-container">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="image-input"
-                id="pet-image"
-              />
-              <label htmlFor="pet-image" className="image-upload-label">
-                {previewUrl ? (
-                  <img 
-                    src={previewUrl} 
-                    alt="Preview" 
-                    className="image-preview"
-                  />
+          <div className="add-pet-header">
+            <h2>Add New Pet</h2>
+            <div className="upload-photo-container">
+              <label htmlFor="petImage" className="upload-photo-button">
+                {fileName ? (
+                  <span className="file-name" title={fileName}>
+                    {fileName.length > 20 ? fileName.substring(0, 20) + '...' : fileName}
+                  </span>
                 ) : (
-                  <div className="upload-placeholder">
-                    <span>Click to upload image</span>
-                  </div>
+                  <>
+                    <span className="camera-icon">📷</span>
+                    Upload Photo
+                  </>
                 )}
               </label>
+              <input
+                type="file"
+                id="petImage"
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                accept="image/*"
+                className="hidden-input"
+              />
             </div>
-
+          </div>
+          
+          <form onSubmit={handleSubmit}>
             <div className="basic-info-container">
               <input
                 type="text"
-                name="name"
+                id="petName"
+                value={formData.petName}
+                onChange={handleInputChange}
                 placeholder="Pet's Name"
-                value={newPet.name}
-                onChange={handleInputChange}
+                required
               />
               <input
                 type="text"
-                name="age"
+                id="petAge"
+                value={formData.petAge}
+                onChange={handleInputChange}
                 placeholder="Age"
-                value={newPet.age}
-                onChange={handleInputChange}
+                required
               />
               <input
                 type="text"
-                name="species"
+                id="petSpecies"
+                value={formData.petSpecies}
+                onChange={handleInputChange}
                 placeholder="Species"
-                value={newPet.species}
-                onChange={handleInputChange}
+                required
               />
               <input
                 type="text"
-                name="breed"
-                placeholder="Breed"
-                value={newPet.breed}
+                id="petBreed"
+                value={formData.petBreed}
                 onChange={handleInputChange}
+                placeholder="Breed"
+                required
               />
             </div>
 
             <div className="additional-info-container">
               <input
                 type="text"
-                name="specialNeeds"
-                placeholder="Special Needs"
-                value={newPet.specialNeeds}
+                id="petSpecialNeeds"
+                value={formData.petSpecialNeeds}
                 onChange={handleInputChange}
+                placeholder="Special Needs"
               />
               <input
                 type="text"
-                name="medicalHistory"
-                placeholder="Medical History"
-                value={newPet.medicalHistory}
+                id="petMedicalHistory"
+                value={formData.petMedicalHistory}
                 onChange={handleInputChange}
+                placeholder="Medical History"
               />
               <textarea
-                name="otherInfo"
-                placeholder="Other Info"
-                value={newPet.otherInfo}
+                id="petOtherInfo"
+                value={formData.petOtherInfo}
                 onChange={handleInputChange}
+                placeholder="Other Info"
               />
             </div>
 
-            <button type="submit" className="add-button">Add</button>
+            <button type="submit" className="add-button">
+              Add
+            </button>
           </form>
         </div>
 
+        {/* Right side - Pet List */}
         <div className="pets-list">
-          {pets.map((pet, index) => (
-            <div key={index} className="pet-card">
-              <img src={pet.image} alt={pet.name} className="pet-image" />
+          {pets.map((pet) => (
+            <div key={pet.id} className="pet-card">
+              <img
+                src={pet.image || 'default-pet-image.jpg'}
+                alt={pet.name}
+                className="pet-image"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'default-pet-image.jpg';
+                }}
+              />
               <div className="pet-info">
                 <p><strong>Name:</strong> {pet.name}</p>
                 <p><strong>Age:</strong> {pet.age}</p>
                 <p><strong>Breed:</strong> {pet.breed}</p>
               </div>
+              <button 
+                onClick={() => handleDelete(pet.id)} 
+                className="delete-button"
+                title="Delete pet"
+              >
+                <Icon icon="mdi:delete" />
+              </button>
             </div>
           ))}
         </div>
