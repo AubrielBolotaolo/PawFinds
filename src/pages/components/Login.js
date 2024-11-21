@@ -22,10 +22,9 @@ function Login({isOpen, onClose, onHomeScreenClick}) {
     city: '',
     zipCode: ''
 });
-const [fullName, setFullName] = useState('');
-const [showDocumentForm, setShowDocumentForm] = useState(false);
-const [document, setDocument] = useState(null);
-const [documentName, setDocumentName] = useState('');
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [document, setDocument] = useState(null);
+  const [fullName, setFullName] = useState('');
 
   const countryCodes = [
     { code: '+63', country: 'PH', length: 10 },
@@ -147,110 +146,93 @@ const handlePhoneBlur = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (signUpMode) {
-      // Validation checks
-      const isEmailValid = await validateEmail(email);
-      const isPasswordValid = validatePassword(password);
-      const isPhoneValid = validatePhoneNumber();
-      
-      if (!isEmailValid || !isPasswordValid || !isPhoneValid) {
+    if (signUpMode && showDocumentUpload) {
+      if (!document) {
+        toast.error('Please upload your credentials');
         return;
-      }
-
-      if (password !== confirmPassword) {
-        toast.error('Passwords do not match');
-        return;
-      }
-
-      if (!fullName.trim()) {
-        toast.error('Please enter your full name');
-        return;
-      }
-
-      // Create user data object based on role
-      const userData = {
-        fullName: fullName,
-        email: email,
-        password: password,
-        phoneNumber: `${countryCode}${phoneNumber}`,
-        role: selectedRole,
-        createdAt: new Date().toISOString()
-      };
-
-      // Add clinic details if veterinarian
-      if (selectedRole === 'veterinarian') {
-        if (!clinicName || !openingDays.start || !openingDays.end || 
-            !openingHours.open || !openingHours.close || 
-            !address.street || !address.barangay || 
-            !address.city || !address.zipCode) {
-          toast.error('Please fill in all clinic details');
-          return;
-        }
-
-        userData.clinic = {
-          name: clinicName,
-          schedule: {
-            days: {
-              start: openingDays.start,
-              end: openingDays.end
-            },
-            hours: {
-              open: openingHours.open,
-              close: openingHours.close
-            }
-          },
-          address: {
-            street: address.street,
-            barangay: address.barangay,
-            city: address.city,
-            zipCode: address.zipCode
-          }
-        };
       }
 
       try {
-        const endpoint = selectedRole === 'veterinarian' ? 'veterinarians' : 'petOwners';
-        const response = await fetch(`http://localhost:3001/${endpoint}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(userData)
-        });
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Document = reader.result;
+          
+          // Create a unique ID
+          const id = Date.now().toString();
+          
+          const userData = {
+            id,
+            fullName,
+            email,
+            phoneNumber: countryCode + phoneNumber,
+            password,
+            clinic: {
+              name: clinicName,
+              openingDays,
+              openingHours,
+              address,
+            },
+            credentials: base64Document,
+            role: 'veterinarian',
+            createdAt: new Date().toISOString()
+          };
 
-        if (!response.ok) {
-          throw new Error('Registration failed');
-        }
+          console.log('Attempting to register with data:', userData); // Debug log
 
-        const newUser = await response.json();
-        toast.success('Registration successful!');
-        
-        // Reset form
-        setFullName('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        setPhoneNumber('');
-        setClinicName('');
-        setOpeningDays({ start: '', end: '' });
-        setOpeningHours({ open: '', close: '' });
-        setAddress({
-          street: '',
-          barangay: '',
-          city: '',
-          zipCode: ''
-        });
-        
-        // Switch back to login mode
-        setSignUpMode(false);
-        setShowClinicForm(false);
-        setShowSignUpForm(false);
+          try {
+            const response = await fetch('http://localhost:3001/veterinarians', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(userData)
+            });
 
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Registration successful:', result); // Debug log
+
+            toast.success('Registration successful!');
+            // Reset all form states
+            setSignUpMode(false);
+            setShowDocumentUpload(false);
+            setShowClinicForm(false);
+            setShowSignUpForm(false);
+            setSelectedRole(null);
+            setFullName('');
+            setEmail('');
+            setPassword('');
+            setConfirmPassword('');
+            setPhoneNumber('');
+            setClinicName('');
+            setOpeningDays({ start: '', end: '' });
+            setOpeningHours({ open: '', close: '' });
+            setAddress({
+              street: '',
+              barangay: '',
+              city: '',
+              zipCode: ''
+            });
+            setDocument(null);
+            
+          } catch (error) {
+            console.error('Registration error:', error);
+            toast.error('Registration failed. Please try again.');
+          }
+        };
+
+        reader.readAsDataURL(document);
       } catch (error) {
-        console.error('Registration error:', error);
-        toast.error('Registration failed. Please try again.');
+        console.error('File reading error:', error);
+        toast.error('Error processing document. Please try again.');
       }
-    } else {
+      return;
+    }
+
+    if (!signUpMode) {
       const isEmailValid = await validateEmail(email);
       const isPasswordValid = validatePassword(password);
   
@@ -293,143 +275,55 @@ const handlePhoneBlur = () => {
   };
 
   const handleContinue = () => {
-    if (showSignUpForm) {
-      // Validate first form
-      if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
-        toast.error('Please fill in all fields');
-        return;
-      }
-      if (password !== confirmPassword) {
-        toast.error('Passwords do not match');
-        return;
-      }
-      if (!validatePhoneNumber()) {
-        return;
-      }
-      setShowSignUpForm(false);
-      setShowClinicForm(true);
-    } else if (showClinicForm) {
-      // Validate clinic form
-      if (!clinicName || 
-          !openingDays.start || 
-          !openingDays.end || 
-          !openingHours.open || 
-          !openingHours.close || 
-          !address.street || 
-          !address.barangay || 
-          !address.city || 
-          !address.zipCode) {
-        toast.error('Please fill in all clinic details');
-        return;
-      }
-      setShowClinicForm(false);
-      setShowDocumentForm(true);
-    }
-  };
-
-  const handleDocumentChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.type !== 'application/pdf') {
-        toast.error('Please upload a PDF file only');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error('File size should be less than 5MB');
-        return;
-      }
-      setDocument(file);
-      setDocumentName(file.name);
-    }
-  };
-
-  const handleFinalSignup = async () => {
-    if (!document) {
-      toast.error('Please upload your veterinary license');
+    if (selectedRole && !showSignUpForm) {
+      setShowSignUpForm(true);
       return;
     }
 
-    try {
-      // Convert PDF to base64
-      const base64Document = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(document);
-      });
+    // Add validation for the signup form
+    if (showSignUpForm && !showClinicForm) {
+      const isEmailValid = validateEmail(email);
+      const isPasswordValid = validatePassword(password);
+      const doPasswordsMatch = validatePasswordMatch();
+      const isPhoneValid = validatePhoneNumber();
 
-      // Create veterinarian data object
-      const veterinarianData = {
-        fullName,
-        email,
-        password,
-        phoneNumber: `${countryCode}${phoneNumber}`,
-        role: 'veterinarian',
-        clinic: {
-          name: clinicName,
-          schedule: {
-            days: {
-              start: openingDays.start,
-              end: openingDays.end
-            },
-            hours: {
-              open: openingHours.open,
-              close: openingHours.close
-            }
-          },
-          address: {
-            street: address.street,
-            barangay: address.barangay,
-            city: address.city,
-            zipCode: address.zipCode
-          }
-        },
-        license: {
-          document: base64Document,
-          fileName: documentName,
-          uploadDate: new Date().toISOString()
-        },
-        createdAt: new Date().toISOString(),
-        status: 'pending' // for admin approval
-      };
-
-      const response = await fetch('http://localhost:3001/veterinarians', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(veterinarianData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Registration failed');
+      if (isEmailValid && isPasswordValid && doPasswordsMatch && isPhoneValid) {
+        if (selectedRole === 'veterinarian') {
+          setShowClinicForm(true);
+        }
       }
+      return;
+    }
 
-      toast.success('Registration successful! Please wait for admin approval.');
-      
-      // Reset all form states
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setPhoneNumber('');
-      setClinicName('');
-      setOpeningDays({ start: '', end: '' });
-      setOpeningHours({ open: '', close: '' });
-      setAddress({
-        street: '',
-        barangay: '',
-        city: '',
-        zipCode: ''
-      });
-      setDocument(null);
-      setDocumentName('');
-      setShowDocumentForm(false);
+    // Add validation for clinic form
+    if (showClinicForm) {
+      if (!clinicName || !openingDays.start || !openingDays.end || 
+          !openingHours.open || !openingHours.close || 
+          !address.street || !address.barangay || 
+          !address.city || !address.zipCode) {
+        toast.error('Please fill in all clinic details');
+        return;
+      }
+      setShowDocumentUpload(true);
       setShowClinicForm(false);
-      setShowSignUpForm(false);
-      setSignUpMode(false);
+      return;
+    }
+  };
 
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
+  const validatePasswordMatch = () => {
+    if (confirmPassword && password !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return false;
+    }
+    return true;
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'application/pdf') {
+      setDocument(file);
+    } else {
+      toast.error('Please upload a PDF file');
     }
   };
 
@@ -506,7 +400,7 @@ const handlePhoneBlur = () => {
 
               <form onSubmit={handleSubmit}>
                   <div className="input-field">
-                      <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)}/>
+                      <input type="text" placeholder="Full Name"/>
                       <Icon icon="mdi:user" className="icon" style={{pointerEvents:'none'}}/>
                   </div>
                   <div className="input-field">
@@ -538,157 +432,134 @@ const handlePhoneBlur = () => {
                 <button type="submit" className="btn">Signup</button>
               </form>
             </div>
-          ) : showSignUpForm && !showClinicForm ? (
-                <div className="signup-form">
-                  <h2>REGISTER NOW</h2>
-                  <p>Hi there, Fur Parent! Please create an account.</p>
+          ) : showSignUpForm && !showClinicForm && !showDocumentUpload ? (
+            <div className="signup-form">
+              <h2>REGISTER NOW</h2>
+              <p>Hi there, Fur Parent! Please create an account.</p>
 
-                  <div className="input-field">
-                    <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)}/>
-                    <Icon icon="mdi:user" className="icon" style={{pointerEvents:'none'}}/>
-                  </div>
-                  <div className="input-field">
-                    <input type="text" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => validateEmail(email)}/>
-                    <Icon icon="mdi:email" className="icon" style={{pointerEvents:'none'}}/>
-                  </div>
-                  <div className="input-field phone-input-container">
-                    <div className="country-select-wrapper">
-                      <select className="country-select" value={countryCode} onChange={(e) => {setCountryCode(e.target.value); setPhoneNumber('');}}>
-                        {countryCodes.map((country) => (
-                          <option key={country.code} value={country.code}>
-                            {country.country} {country.code}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                        <input type="tel" placeholder="Phone Number" value={phoneNumber} onChange={handlePhoneNumberChange} onBlur={handlePhoneBlur} className="phone-input" maxLength={countryCodes.find(c => c.code === countryCode).length}/>
-                        <Icon icon="mdi:phone" className="icon" style={{pointerEvents:'none'}}/>
-                  </div>
-
-                      <div className="input-field">
-                        <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} onBlur={() => validatePassword(password)}/>
-                        <Icon icon={showPassword ? "mdi:eye" : "mdi:eye-off"} className="icon" onClick={togglePasswordVisibility}/>
-                      </div>
-                      <div className="input-field">
-                        <input type={showPassword ? "text" : "password"} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} onBlur={validatePasswordMatch}/>
-                        <Icon icon={showPassword ? "mdi:eye" : "mdi:eye-off"} className="icon" onClick={togglePasswordVisibility}/>
-                      </div>
-                  
-                    <button className="btn continue-btn" onClick={handleContinue}>Continue</button>
-                  </div>
-
-              ) : showClinicForm ? (
-                <div className="signup-form">
-                  <h2>CLINIC DETAILS</h2>
-                  <p>Please provide your clinic information</p>
-
-                  <div className="input-field">
-                    <input type="text" placeholder="Clinic Name" value={clinicName} onChange={(e) => setClinicName(e.target.value)}/>
-                  </div>
-
-                  <div className="day-input">
-                    <div className="input-field">
-                      <select value={openingDays.start} onChange={(e) => setOpeningDays({...openingDays, start: e.target.value})}>
-                        <option value="">Open Day</option>
-                        <option value="Monday">Monday</option>
-                        <option value="Tuesday">Tuesday</option>
-                        <option value="Wednesday">Wednesday</option>
-                        <option value="Thursday">Thursday</option>
-                        <option value="Friday">Friday</option>
-                        <option value="Saturday">Saturday</option>
-                        <option value="Sunday">Sunday</option>
-                      </select>
-                    </div>
-
-                    <span className="to-text">to</span>
-                    <div className="input-field">
-                      <select value={openingDays.end} onChange={(e) => setOpeningDays({...openingDays, end: e.target.value})}>
-                        <option value="">Open Day</option>
-                        <option value="Monday">Monday</option>
-                        <option value="Tuesday">Tuesday</option>
-                        <option value="Wednesday">Wednesday</option>
-                        <option value="Thursday">Thursday</option>
-                        <option value="Friday">Friday</option>
-                        <option value="Saturday">Saturday</option>
-                        <option value="Sunday">Sunday</option>
-                      </select>
-                    </div>
-                  </div>
-
-                    <div className="time-inputs">
-                      <div className="input-field">
-                        <input type="time" placeholder="Opening Time" value={openingHours.open} onChange={(e) => setOpeningHours({...openingHours, open: e.target.value})}/>
-                      </div>
-
-                      <span className="to-text">to</span>
-                      <div className="input-field">
-                        <input type="time" placeholder="Closing Time" value={openingHours.close} onChange={(e) => setOpeningHours({...openingHours, close: e.target.value})}/>
-                      </div>
-                    </div>
-
-                    <div className="address-container">
-                      <div className="input-field">
-                        <input type="text" placeholder="Street" value={address.street} onChange={(e) => setAddress({...address, street: e.target.value})}/>
-                      </div>
-                      <div className="input-field">
-                        <input type="text" placeholder="Barangay" value={address.barangay} onChange={(e) => setAddress({...address, barangay: e.target.value})}/>
-                      </div>
-                      <div className="input-field">
-                        <input type="text" placeholder="Municipality/City" value={address.city} onChange={(e) => setAddress({...address, city: e.target.value})}/>
-                      </div>
-                      <div className="input-field">
-                        <input type="text" placeholder="Zip Code" value={address.zipCode} onChange={(e) => setAddress({...address, zipCode: e.target.value})}/>
-                      </div>
-                    </div>
-
-                    <button className="btn continue-btn" onClick={handleContinue}>Continue</button>
+              <div className="input-field">
+                <input type="text" placeholder="Full Name" />
+                <Icon icon="mdi:user" className="icon" style={{pointerEvents:'none'}}/>
+              </div>
+              <div className="input-field">
+                <input type="text" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => validateEmail(email)}/>
+                <Icon icon="mdi:email" className="icon" style={{pointerEvents:'none'}}/>
+              </div>
+              <div className="input-field phone-input-container">
+                <div className="country-select-wrapper">
+                  <select className="country-select" value={countryCode} onChange={(e) => {setCountryCode(e.target.value); setPhoneNumber('');}}>
+                    {countryCodes.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.country} {country.code}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ) : showDocumentForm ? (
-                <div className="signup-form">
-                  <h2>UPLOAD LICENSE</h2>
-                  <p>Please upload your veterinary license (PDF format only)</p>
+                    <input type="tel" placeholder="Phone Number" value={phoneNumber} onChange={handlePhoneNumberChange} onBlur={handlePhoneBlur} className="phone-input" maxLength={countryCodes.find(c => c.code === countryCode).length}/>
+                    <Icon icon="mdi:phone" className="icon" style={{pointerEvents:'none'}}/>
+              </div>
 
-                  <div className="document-upload">
-                    <div className="upload-container">
-                      <input
-                        type="file"
-                        id="document-upload"
-                        accept=".pdf"
-                        onChange={handleDocumentChange}
-                        style={{ display: 'none' }}
-                      />
-                      <label htmlFor="document-upload" className="upload-label">
-                        <Icon icon="mdi:file-upload" className="upload-icon" />
-                        <span>{documentName || 'Choose PDF file'}</span>
-                      </label>
-                    </div>
-                    {documentName && (
-                      <div className="file-info">
-                        <Icon icon="mdi:file-document" className="file-icon" />
-                        <span>{documentName}</span>
-                        <button 
-                          className="remove-file"
-                          onClick={() => {
-                            setDocument(null);
-                            setDocumentName('');
-                          }}
-                        >
-                          <Icon icon="mdi:close" />
-                        </button>
-                      </div>
-                    )}
+                  <div className="input-field">
+                    <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} onBlur={() => validatePassword(password)}/>
+                    <Icon icon={showPassword ? "mdi:eye" : "mdi:eye-off"} className="icon" onClick={togglePasswordVisibility}/>
+                  </div>
+                  <div className="input-field">
+                    <input type={showPassword ? "text" : "password"} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} onBlur={validatePasswordMatch}/>
+                    <Icon icon={showPassword ? "mdi:eye" : "mdi:eye-off"} className="icon" onClick={togglePasswordVisibility}/>
+                  </div>
+              
+                <button className="btn continue-btn" onClick={handleContinue}>Continue</button>
+              </div>
+          ) : showClinicForm ? (
+            <div className="signup-form">
+              <h2>CLINIC DETAILS</h2>
+              <p>Please provide your clinic information</p>
+
+              <div className="input-field">
+                <input type="text" placeholder="Clinic Name" value={clinicName} onChange={(e) => setClinicName(e.target.value)}/>
+              </div>
+
+              <div className="day-input">
+                <div className="input-field">
+                  <select value={openingDays.start} onChange={(e) => setOpeningDays({...openingDays, start: e.target.value})}>
+                    <option value="">Open Day</option>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                  </select>
+                </div>
+
+                <span className="to-text">to</span>
+                <div className="input-field">
+                  <select value={openingDays.end} onChange={(e) => setOpeningDays({...openingDays, end: e.target.value})}>
+                    <option value="">Open Day</option>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                  </select>
+                </div>
+              </div>
+
+                <div className="time-inputs">
+                  <div className="input-field">
+                    <input type="time" placeholder="Opening Time" value={openingHours.open} onChange={(e) => setOpeningHours({...openingHours, open: e.target.value})}/>
                   </div>
 
-                  <button 
-                    className="btn signup-btn" 
-                    onClick={handleFinalSignup}
-                  >
-                    Sign Up
-                  </button>
+                  <span className="to-text">to</span>
+                  <div className="input-field">
+                    <input type="time" placeholder="Closing Time" value={openingHours.close} onChange={(e) => setOpeningHours({...openingHours, close: e.target.value})}/>
+                  </div>
                 </div>
-              ) : null }
-          </div>
+
+                <div className="address-container">
+                  <div className="input-field">
+                    <input type="text" placeholder="Street" value={address.street} onChange={(e) => setAddress({...address, street: e.target.value})}/>
+                  </div>
+                  <div className="input-field">
+                    <input type="text" placeholder="Barangay" value={address.barangay} onChange={(e) => setAddress({...address, barangay: e.target.value})}/>
+                  </div>
+                  <div className="input-field">
+                    <input type="text" placeholder="Municipality/City" value={address.city} onChange={(e) => setAddress({...address, city: e.target.value})}/>
+                  </div>
+                  <div className="input-field">
+                    <input type="text" placeholder="Zip Code" value={address.zipCode} onChange={(e) => setAddress({...address, zipCode: e.target.value})}/>
+                  </div>
+                </div>
+
+                <button className="btn continue-btn" onClick={handleContinue}>Continue</button>
+            </div>
+          ) : showDocumentUpload ? (
+            <div className="signup-form">
+              <h2>UPLOAD CREDENTIALS</h2>
+              <p>Please upload your veterinary license or credentials</p>
+
+              <div className="document-upload">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileChange}
+                  className="file-input"
+                />
+                {document && (
+                  <p className="file-name">Selected file: {document.name}</p>
+                )}
+              </div>
+
+              <button className="btn submit-btn" onClick={handleSubmit}>
+                Submit Registration
+              </button>
+            </div>
+          ) : null }
         </div>
+      </div>
       <Toaster position="bottom-right" richColors />
     </div>
   );

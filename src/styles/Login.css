@@ -302,3 +302,25 @@
   border-radius: 8px;
   font-size: 14px;
 }
+
+.document-upload {
+  margin: 20px 0;
+}
+
+.file-input {
+  width: 100%;
+  padding: 10px;
+  border: 2px dashed #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.file-name {
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.submit-btn {
+  margin-top: 20px;
+}
