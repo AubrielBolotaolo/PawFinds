@@ -192,6 +192,20 @@
       "time": "11:11",
       "status": "pending",
       "createdAt": "2024-11-20T18:54:41.652Z"
+    },
+    {
+      "id": "d62a",
+      "petId": 1732116281882,
+      "clinicId": "1",
+      "userId": "1",
+      "service": "health",
+      "symptoms": [
+        "behavior-changes"
+      ],
+      "date": "2024-11-21T04:26:04.927Z",
+      "time": "09:00",
+      "status": "pending",
+      "createdAt": "2024-11-21T04:26:59.481Z"
     }
   ],
   "medicalRecords": [

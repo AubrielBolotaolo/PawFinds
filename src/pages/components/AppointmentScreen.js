@@ -127,8 +127,11 @@ function AppointmentScreen() {
     if (!time || !selectedClinic) return false;
     
     const [hours, minutes] = time.split(':').map(Number);
-    const [openHours, openMinutes] = selectedClinic.clinic.schedule.hours.open.split(':').map(Number);
-    const [closeHours, closeMinutes] = selectedClinic.clinic.schedule.hours.close.split(':').map(Number);
+    const clinicHours = selectedClinic.clinic.openingHours || selectedClinic.clinic.schedule?.hours;
+    if (!clinicHours) return false;
+
+    const [openHours, openMinutes] = clinicHours.open.split(':').map(Number);
+    const [closeHours, closeMinutes] = clinicHours.close.split(':').map(Number);
     
     const timeValue = hours * 60 + minutes;
     const openValue = openHours * 60 + openMinutes;
@@ -306,70 +309,51 @@ function AppointmentScreen() {
       case 'clinic-selection':
         return (
           <div className="clinic-selection">
-            <h2>Nearby Vet Clinics</h2>
-            <p>Choose your preferred clinic to visit and book an appointment.</p>
-
-            <Swiper
-              modules={[Pagination, Navigation]}
-              spaceBetween={20}
-              slidesPerView={3}
-              pagination={{
-                clickable: true,
-                el: '.swiper-pagination',
-                type: 'bullets',
-              }}
-              navigation={{
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-              }}
-              className="clinics-swiper"
-              breakpoints={{
-                320: { slidesPerView: 1 },
-                768: { slidesPerView: 2 },
-                1024: { slidesPerView: 3 },
-              }}
-            >
+            <h2>Select a Clinic</h2>
+            <div className="clinics-grid">
               {clinics.map((clinic) => (
-                <SwiperSlide key={clinic.id}>
-                  <div 
-                    className={`clinic-card ${selectedClinic?.id === clinic.id ? 'selected' : ''}`}
-                    onClick={() => setSelectedClinic(clinic)}
-                  >
-                    <img 
-                      src={clinic.clinic.image || 'default-clinic-image.jpg'} 
-                      alt={clinic.clinic.name}
-                      className="clinic-image"
-                    />
-                    <div className="clinic-info">
-                      <h3>Clinic: {clinic.clinic.name}</h3>
+                <div
+                  key={clinic.id}
+                  className={`clinic-card ${selectedClinic?.id === clinic.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedClinic(clinic)}
+                >
+                  <h3>{clinic.clinic?.name || 'Unnamed Clinic'}</h3>
+                  {clinic.clinic?.schedule && (
+                    <>
                       <p>
-                        <strong>Address:</strong> {clinic.clinic.address.street}, {clinic.clinic.address.barangay}, {clinic.clinic.address.city}
+                        <Icon icon="mdi:clock-outline" />
+                        {clinic.clinic.schedule.hours?.open} - {clinic.clinic.schedule.hours?.close}
                       </p>
                       <p>
-                        <strong>Working Hours:</strong> {clinic.clinic.schedule.hours.open} - {clinic.clinic.schedule.hours.close} | {clinic.clinic.schedule.days.start}-{clinic.clinic.schedule.days.end}
+                        <Icon icon="mdi:calendar" />
+                        {clinic.clinic.schedule.days?.start} - {clinic.clinic.schedule.days?.end}
                       </p>
-                      <p>
-                        <strong>Ratings:</strong> {clinic.clinic.ratings || '4.5'} Stars
-                      </p>
-                      <button className="learn-more-btn">
-                        Learn More →
-                      </button>
-                    </div>
-                  </div>
-                </SwiperSlide>
+                    </>
+                  )}
+                  <p>
+                    <Icon icon="mdi:map-marker" />
+                    {clinic.clinic?.address?.city || 'No address'}
+                  </p>
+                </div>
               ))}
-            </Swiper>
-            <div className="swiper-pagination"></div>
-            <div className="swiper-button-prev"></div>
-            <div className="swiper-button-next"></div>
-
-            <button 
-              className="next-button"
-              disabled={!selectedClinic}
-              onClick={() => setStep('schedule')}
-            >
-              Next
-            </button>
+            </div>
+            <div className="navigation-buttons">
+              <button className="back-button" onClick={() => setStep('symptoms')}>
+                Back
+              </button>
+              <button
+                className="next-button"
+                onClick={() => {
+                  if (!selectedClinic) {
+                    toast.error('Please select a clinic');
+                    return;
+                  }
+                  setStep('schedule');
+                }}
+              >
+                Next
+              </button>
+            </div>
           </div>
         );
 
@@ -446,66 +430,36 @@ function AppointmentScreen() {
       case 'confirmation':
         return (
           <div className="confirmation-section">
-            <h2>Confirmation</h2>
-            <p className="confirmation-subtitle">
-              Provided below is your appointment details ready to be scheduled, you can still
-              make changes. If none, you can now proceed on clicking the confirm button.
-            </p>
-
+            <h2>Confirm Your Appointment</h2>
             <div className="appointment-summary">
-              <div className="date-header">
-                <div className="date-block">
-                  <div className="month">
-                    {selectedDate.toLocaleString('en-US', { month: 'short' }).toUpperCase()}
-                  </div>
-                  <div className="day">
-                    {selectedDate.getDate().toString().padStart(2, '0')}
-                  </div>
-                </div>
-                <div className="schedule-note">
-                  Please note your Appointment Schedule.
-                </div>
-              </div>
-
-              <div className="appointment-details">
-                <div className="detail-item">
-                  <Icon icon="mdi:calendar" />
-                  <span>
-                    {selectedDate.toLocaleDateString('en-US', { 
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </span>
-                </div>
-
-                <div className="detail-item">
-                  <Icon icon="mdi:map-marker" />
-                  <span>
-                    {selectedClinic.clinic.address.street}, 
-                    {selectedClinic.clinic.address.barangay}, 
-                    {selectedClinic.clinic.address.city}
-                  </span>
-                </div>
-
-                <div className="detail-item">
-                  <Icon icon="mdi:clock-outline" />
-                  <span>
-                    {selectedTime} 
-                    <span className="hours-note">
-                      (Open Hours: {selectedClinic.clinic.schedule.hours.open} - {selectedClinic.clinic.schedule.hours.close})
-                    </span>
-                  </span>
-                </div>
-
-                <div className="detail-item">
-                  <Icon icon="mdi:hospital-building" />
-                  <span>{selectedClinic.clinic.name}</span>
-                </div>
+              <div className="summary-details">
+                {selectedClinic?.clinic?.schedule && (
+                  <>
+                    <div className="detail-item">
+                      <Icon icon="mdi:clock-outline" />
+                      <span>
+                        {selectedTime}
+                        <span className="hours-note">
+                          (Open Hours: {selectedClinic.clinic.schedule.hours?.open} - {selectedClinic.clinic.schedule.hours?.close})
+                        </span>
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <Icon icon="mdi:map-marker" />
+                      <span>
+                        {selectedClinic.clinic.address?.street}, 
+                        {selectedClinic.clinic.address?.barangay}, 
+                        {selectedClinic.clinic.address?.city}
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <Icon icon="mdi:hospital-building" />
+                      <span>{selectedClinic.clinic.name}</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
-
             <div className="confirmation-actions">
               <button 
                 className="back-button"

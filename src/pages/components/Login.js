@@ -168,16 +168,28 @@ const handlePhoneBlur = () => {
             password,
             clinic: {
               name: clinicName,
-              openingDays,
-              openingHours,
-              address,
+              address: {
+                street: address.street,
+                barangay: address.barangay,
+                city: address.city,
+                zipCode: address.zipCode
+              },
+              schedule: {
+                days: {
+                  start: openingDays.start,
+                  end: openingDays.end
+                },
+                hours: {
+                  open: openingHours.open,
+                  close: openingHours.close
+                }
+              },
+              services: ["General Checkup", "Vaccination"]
             },
             credentials: base64Document,
             role: 'veterinarian',
             createdAt: new Date().toISOString()
           };
-
-          console.log('Attempting to register with data:', userData); // Debug log
 
           try {
             const response = await fetch('http://localhost:3001/veterinarians', {
@@ -193,7 +205,7 @@ const handlePhoneBlur = () => {
             }
 
             const result = await response.json();
-            console.log('Registration successful:', result); // Debug log
+            console.log('Registration successful:', result);
 
             toast.success('Registration successful!');
             // Reset all form states
