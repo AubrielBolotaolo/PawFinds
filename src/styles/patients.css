@@ -1,0 +1,98 @@
+.patients-container {
+    padding: 20px;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.search-bar input {
+    border: none;
+    outline: none;
+    width: 100%;
+    margin-left: 10px;
+    font-size: 16px;
+}
+
+.search-icon {
+    color: #666;
+    font-size: 20px;
+}
+
+.patients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.patient-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.patient-image {
+    height: 200px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f5f5f5;
+}
+
+.patient-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.default-image {
+    font-size: 64px;
+    color: #ccc;
+}
+
+.patient-info {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.info-row {
+    margin: 5px 0;
+}
+
+.info-row strong {
+    color: #666;
+}
+
+.patient-details {
+    padding: 15px;
+}
+
+.details-section {
+    margin-bottom: 15px;
+}
+
+.details-section h4 {
+    color: #444;
+    margin-bottom: 5px;
+}
+
+.details-section p {
+    color: #666;
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.loading, .no-patients {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 1.1em;
+} 

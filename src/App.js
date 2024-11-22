@@ -9,6 +9,7 @@ import './styles/dashboard.css';
 import LandingPage from './pages/LandingPage';
 import HomeScreen from './pages/user/HomeScreen';
 import AdminDashboard from './pages/admin/dashboard';
+import VetDashboard from './pages/vet/vetDashboard';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/HomeScreen" element={<HomeScreen />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/vet/vetDashboard" element={<VetDashboard />} />
       </Routes>
     </Router>
   );

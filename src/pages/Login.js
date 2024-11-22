@@ -175,6 +175,7 @@ const handlePhoneBlur = () => {
         }
       }
 
+      // Sign up
       if (signUpMode && showDocumentUpload) {
         if (!document) {
           toast.error('Please upload your credentials');
@@ -273,6 +274,7 @@ const handlePhoneBlur = () => {
         return;
       }
   
+      // Sign in
       if (!signUpMode) {
         const isEmailValid = await validateEmail(email);
         const isPasswordValid = validatePassword(password);
@@ -291,6 +293,7 @@ const handlePhoneBlur = () => {
             const user = [...petOwners, ...veterinarians].find(u => u.email === email && u.password === password);
   
             if (user) {
+              const isVeterinarian = !!user.clinic;
               // Store user data in localStorage
               localStorage.setItem('userRole', user.clinic ? 'veterinarian' : 'pet-owner');
               localStorage.setItem('fullName', user.fullName);
@@ -299,7 +302,12 @@ const handlePhoneBlur = () => {
   
               toast.success('Login successful!');
               onClose();
-              onHomeScreenClick(email);
+
+              if (isVeterinarian) {
+                navigate('/vet/vetDashboard');
+              } else {
+                onHomeScreenClick(email);
+              }
             } else {
               toast.error('Invalid email or password');
             }
