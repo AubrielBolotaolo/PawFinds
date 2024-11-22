@@ -6,7 +6,7 @@ import 'swiper/css/navigation';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination} from 'swiper/modules';
 import {Icon} from '@iconify/react';
-import Login from './components/Login';
+import Login from './Login';
 
 /* Home */
 import Logo from './assets/logo.png';
