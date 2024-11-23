@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {Icon} from '@iconify/react';
 import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination, Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 import '../../styles/PetScreen.css';
 import { toast } from 'sonner';
 
@@ -389,31 +391,43 @@ const PetScreen = () => {
 
         {/* Right side - Pet List */}
         <div className="pets-list">
-          {pets.map((pet) => (
-            <div key={pet.id} className="pet-card">
-              <img
-                src={pet.image || 'default-pet-image.jpg'}
-                alt={pet.name}
-                className="pet-image"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'default-pet-image.jpg';
-                }}
-              />
-              <div className="pet-info">
-                <p><strong>Name:</strong> {pet.name}</p>
-                <p><strong>Age:</strong> {pet.age}</p>
-                <p><strong>Breed:</strong> {pet.breed}</p>
-              </div>
-              <button 
-                onClick={() => handleDelete(pet.id)} 
-                className="delete-button"
-                title="Delete pet"
-              >
-                <Icon icon="mdi:delete" />
-              </button>
-            </div>
-          ))}
+          <Swiper
+            modules={[Pagination, Navigation]}
+            direction="vertical"
+            slidesPerView={5}
+            spaceBetween={10}
+            navigation={false}
+
+            className="pets-list-swiper"
+          >
+            {pets.map((pet) => (
+              <SwiperSlide key={pet.id}>
+                <div className="pet-list-card">
+                  <img
+                    src={pet.image || 'default-pet-image.jpg'}
+                    alt={pet.name}
+                    className="pet-list-image"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'default-pet-image.jpg';
+                    }}
+                  />
+                  <div className="pet-list-info">
+                    <p><strong>Name:</strong> {pet.name}</p>
+                    <p><strong>Age:</strong> {pet.age}</p>
+                    <p><strong>Breed:</strong> {pet.breed}</p>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(pet.id)}
+                    className="delete-button"
+                    title="Delete pet"
+                  >
+                    <Icon icon="mdi:delete" className="delete-icon"/>
+                  </button>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
         </div>
       </div>
     </div>

@@ -156,22 +156,14 @@ function AppointmentScreen() {
       case 'pet-selection':
         return (
           <>
-            <h2>Select Your Pet</h2>
+            <h2>SELECT YOUR PET</h2>
             <p>Select the pet you want to schedule an appointment for.</p>
             
             <Swiper
-              modules={[Pagination, Navigation]}
-              spaceBetween={20}
+              modules={[Pagination]}
+              spaceBetween={0}
               slidesPerView={5}
-              pagination={{
-                clickable: true,
-                el: '.swiper-pagination',
-                type: 'bullets',
-              }}
-              navigation={{
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-              }}
+              navigation={false}
               className="pets-swiper"
               breakpoints={{
                 320: {
@@ -216,8 +208,6 @@ function AppointmentScreen() {
               ))}
             </Swiper>
             <div className="swiper-pagination"></div>
-            <div className="swiper-button-prev"></div>
-            <div className="swiper-button-next"></div>
 
             <button 
               className="next-button"

@@ -1,5 +1,5 @@
 .appointment-container {
-  padding: 24px;
+  padding: 22px;
   height: 100%;
   overflow-y: auto;
 }
@@ -12,14 +12,15 @@
 }
 
 .fur-patient-section h2 {
-  font-size: 24px;
+  font-size: 30px;
   color: #333;
-  margin-bottom: 8px;
+  margin-bottom: -15px;
+  margin-top: 0;
 }
 
 .fur-patient-section p {
   color: #666;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
   font-size: 16px;
 }
 
@@ -33,11 +34,16 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  align-items: center;
+  padding: 15px;
+  width: 150px;
+  margin-left: 10px;
 }
 
 .pet-card:hover {
-  background: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
 }
 
 .pet-card.selected {
@@ -45,26 +51,31 @@
   background-color: #f0f7ff;
 }
 
-.pet-card .pet-image {
-  width: 90%;
-  height: 90%;
-  aspect-ratio: 1;
+.pet-image {
+  width: 120px;
+  height: 120px;
   object-fit: cover;
-  border-bottom: 1px solid #e0e0e0;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  border: 1px solid #e0e0e0;
+  padding: 10px;
 }
 
 .pet-info {
-  padding: 12px;
+  text-align: center;
+  width: 100%;
 }
 
 .pet-info p {
-  margin: 4px 0;
+  margin: 5px 0;
   font-size: 14px;
   color: #333;
+  line-height: 1.2;
 }
 
 .pet-info p strong {
   color: #000;
+  font-weight: 500;
   margin-right: 4px;
 }
 
@@ -101,7 +112,7 @@
 }
 
 .pets-swiper {
-  padding: 20px 40px;
+  padding: 20px 10px;
   margin: 20px 0;
 }
 
@@ -113,29 +124,13 @@
 .swiper-pagination-bullet {
   width: 8px;
   height: 8px;
-  background: #e0e0e0;
+  background: #000;
   opacity: 1;
 }
 
 .swiper-pagination-bullet-active {
-  background: #007bff;
-}
-
-.swiper-button-prev,
-.swiper-button-next {
-  color: #007bff;
-}
-
-.swiper-button-disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-@media (max-width: 600px) {
-  .pet-content {
-    flex-direction: column;
-    text-align: center;
-  }
+  opacity: 1;
+  background: #666;
 }
 
 /* Service Selection Styles */
