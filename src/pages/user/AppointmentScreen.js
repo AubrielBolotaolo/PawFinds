@@ -27,6 +27,8 @@ function AppointmentScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState('09:00');
   const navigate = useNavigate();
+  const CLINICS_PER_PAGE = 4;
+  const [currentClinicPage, setCurrentClinicPage] = useState(0);
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -62,7 +64,16 @@ function AppointmentScreen() {
         const response = await fetch('http://localhost:3001/veterinarians');
         if (!response.ok) throw new Error('Failed to fetch clinics');
         const data = await response.json();
-        setClinics(data);
+        
+        const uniqueClinics = data.reduce((acc, current) => {
+          const isDuplicate = acc.find(item => item.id === current.id);
+          if (!isDuplicate) {
+            acc.push(current);
+          }
+          return acc;
+        }, []);
+        
+        setClinics(uniqueClinics);
       } catch (error) {
         console.error('Error fetching clinics:', error);
         toast.error('Failed to load veterinary clinics');
@@ -94,6 +105,10 @@ function AppointmentScreen() {
 
   const handlePetSelect = (pet) => {
     setSelectedPet(pet);
+  };
+
+  const handleClinicSelect = (clinic) => {
+    setSelectedClinic(clinic);
   };
 
   const symptoms = [
@@ -149,6 +164,11 @@ function AppointmentScreen() {
     };
     
     return workingDays[`${selectedClinic.clinic.schedule.days.start}-${selectedClinic.clinic.schedule.days.end}`]?.includes(day);
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentClinicPage(newPage);
+    setSelectedClinic(null); // Reset selection when changing pages
   };
 
   const renderContent = () => {
@@ -222,7 +242,7 @@ function AppointmentScreen() {
       case 'service-selection':
         return (
           <div className="service-selection">
-            <h2>Select Service Type</h2>
+            <h2>SELECT SERVICE TYPE</h2>
             <p>What type of service does your pet need?</p>
             
             <div className="service-options">
@@ -239,7 +259,7 @@ function AppointmentScreen() {
                 className={`service-card ${selectedService === 'care' ? 'selected' : ''}`}
                 onClick={() => setSelectedService('care')}
               >
-                <Icon icon="mdi:pet" className="service-icon" />
+                <Icon icon="mdi:paw" className="service-icon" />
                 <h3>Care</h3>
                 <p>For grooming and general care services</p>
               </div>
@@ -265,7 +285,7 @@ function AppointmentScreen() {
       case 'symptoms':
         return (
           <div className="symptoms-section">
-            <h2>Pet Encountered Symptoms</h2>
+            <h2>PET ENCOUNTERED SYMPTOMS</h2>
             <p>Select the box if your pet encountered the given symptoms. Select all that apply.</p>
             
             <div className="symptoms-grid">
@@ -296,56 +316,85 @@ function AppointmentScreen() {
           </div>
         );
 
-      case 'clinic-selection':
-        return (
-          <div className="clinic-selection">
-            <h2>Select a Clinic</h2>
-            <div className="clinics-grid">
-              {clinics.map((clinic) => (
-                <div
-                  key={clinic.id}
-                  className={`clinic-card ${selectedClinic?.id === clinic.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedClinic(clinic)}
-                >
-                  <h3>{clinic.clinic?.name || 'Unnamed Clinic'}</h3>
-                  {clinic.clinic?.schedule && (
-                    <>
-                      <p>
-                        <Icon icon="mdi:clock-outline" />
-                        {clinic.clinic.schedule.hours?.open} - {clinic.clinic.schedule.hours?.close}
-                      </p>
-                      <p>
-                        <Icon icon="mdi:calendar" />
-                        {clinic.clinic.schedule.days?.start} - {clinic.clinic.schedule.days?.end}
-                      </p>
-                    </>
-                  )}
-                  <p>
-                    <Icon icon="mdi:map-marker" />
-                    {clinic.clinic?.address?.city || 'No address'}
-                  </p>
+        case 'clinic-selection':
+          const totalClinicPages = Math.ceil(clinics.length / CLINICS_PER_PAGE);
+          const startIndex = currentClinicPage * CLINICS_PER_PAGE;
+          const displayedClinics = clinics.slice(startIndex, startIndex + CLINICS_PER_PAGE);
+
+          return (
+            <div className="clinic-selection">
+              <h2>Select a Clinic</h2>
+              <div className="clinics-grid">
+                {displayedClinics.map((clinic) => (
+                  <div
+                    key={clinic.id}
+                    className={`clinic-card ${selectedClinic?.id === clinic.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedClinic(clinic)}
+                  >
+                    <h3>{clinic.clinic?.name || 'Unnamed Clinic'}</h3>
+                    {clinic.clinic?.schedule && (
+                      <>
+                        <p>
+                          <Icon icon="mdi:clock-outline" />
+                          {clinic.clinic.schedule.hours?.open} - {clinic.clinic.schedule.hours?.close}
+                        </p>
+                        <p>
+                          <Icon icon="mdi:calendar" />
+                          {clinic.clinic.schedule.days?.start} - {clinic.clinic.schedule.days?.end}
+                        </p>
+                      </>
+                    )}
+                    <p>
+                      <Icon icon="mdi:map-marker" />
+                      {clinic.clinic?.address?.city || 'No address'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {clinics.length > CLINICS_PER_PAGE && (
+                <div className="pagination-controls">
+                  <button 
+                    className="pagination-button"
+                    disabled={currentClinicPage === 0}
+                    onClick={() => handlePageChange(currentClinicPage - 1)}
+                  >
+                    Previous
+                  </button>
+                  <span className="page-indicator">
+                    Page {currentClinicPage + 1} of {totalClinicPages}
+                  </span>
+                  <button 
+                    className="pagination-button"
+                    disabled={currentClinicPage >= totalClinicPages - 1}
+                    onClick={() => handlePageChange(currentClinicPage + 1)}
+                  >
+                    Next
+                  </button>
                 </div>
-              ))}
+              )}
+
+              <div className="navigation-buttons">
+                <button className="back-button" onClick={() => setStep('symptoms')}>
+                  Back
+                </button>
+                <button
+                  className="next-button"
+                  disabled={!selectedClinic}
+                  onClick={() => {
+                    if (!selectedClinic) {
+                      toast.error('Please select a clinic');
+                      return;
+                    }
+                    setStep('schedule');
+                  }}
+                >
+                  Next
+                </button>
+              </div>
             </div>
-            <div className="navigation-buttons">
-              <button className="back-button" onClick={() => setStep('symptoms')}>
-                Back
-              </button>
-              <button
-                className="next-button"
-                onClick={() => {
-                  if (!selectedClinic) {
-                    toast.error('Please select a clinic');
-                    return;
-                  }
-                  setStep('schedule');
-                }}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        );
+          );
+  
 
       case 'schedule':
         return (

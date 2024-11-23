@@ -1,7 +1,6 @@
 .appointment-container {
   padding: 22px;
   height: 100%;
-  overflow-y: auto;
 }
 
 .fur-patient-section {
@@ -138,6 +137,15 @@
   text-align: center;
 }
 
+.service-selection h2 {
+  font-size: 30px;
+  margin-bottom: -15px;
+}
+
+.service-selection p {
+  margin-bottom: 32px;
+}
+
 .service-options {
   display: flex;
   gap: 24px;
@@ -167,7 +175,7 @@
 
 .service-icon {
   font-size: 48px;
-  color: #007bff;
+  color: #000;
   margin-bottom: 16px;
 }
 
@@ -178,7 +186,7 @@
 
 .symptoms-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin: 24px 0;
 }
@@ -234,28 +242,32 @@
   padding: 24px;
 }
 
-.clinics-swiper {
-  padding: 20px 40px;
+.clinics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0px 10px;
   margin: 20px 0;
+  width: 90%;
 }
 
 .clinic-card {
   background: white;
   border: 1px solid #e0e0e0;
   border-radius: 12px;
-  overflow: hidden;
+  padding: 20px;
   transition: all 0.3s ease;
-  height: 100%;
   cursor: pointer;
+  height: 60%;
 }
 
 .clinic-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .clinic-card.selected {
-  border: 2px solid #007bff;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
 }
 
 .clinic-image {
@@ -281,6 +293,40 @@
   font-size: 14px;
 }
 
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.pagination-button {
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .clinics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
 .learn-more-btn {
   background: none;
   border: none;
@@ -298,12 +344,8 @@
 }
 
 @media (max-width: 768px) {
-  .clinic-card {
-    max-width: 100%;
-  }
-  
-  .clinic-image {
-    height: 160px;
+  .clinics-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -580,4 +622,15 @@
 
 .view-appointments-button:hover {
   background: #0056b3;
+}
+
+.clinic-card.empty-card {
+  border: 1px dashed #e0e0e0;
+  background: #f8f9fa;
+  cursor: default;
+}
+
+.clinic-card.empty-card:hover {
+  transform: none;
+  box-shadow: none;
 }
