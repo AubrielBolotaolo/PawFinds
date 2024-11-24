@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Image from '../assets/home-2.png';
 import Image2 from '../assets/logo.png';
 import { toast } from 'sonner';
@@ -10,11 +10,15 @@ import LogScreen from './LogScreen';
 
 function HomeScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [username, setUsername] = useState('');
   const [userRole, setUserRole] = useState('');
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeScreen, setActiveScreen] = useState('dashboard');
+  const [activeNavItem, setActiveNavItem] = useState(
+    location.state?.activeNavItem || 'dashboard'
+  );
   const navItems = [
     { id: 'home', icon: 'mdi:home', label: 'Home' },
     { id: 'pets', icon: 'mdi:paw', label: 'My Pets' },
@@ -70,6 +74,12 @@ function HomeScreen() {
 
     fetchUserData();
   }, [navigate]);
+
+  useEffect(() => {
+    if (location.state?.activeNavItem) {
+      setActiveNavItem(location.state.activeNavItem);
+    }
+  }, [location]);
 
   const handleLogout = () => {
     // Clear all stored data

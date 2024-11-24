@@ -27,6 +27,7 @@ function Login({isOpen, onClose, onHomeScreenClick}) {
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
   const [document, setDocument] = useState(null);
   const [fullName, setFullName] = useState('');
+  const [clinicPhoto, setClinicPhoto] = useState(null);
 
   const countryCodes = [
     { code: '+63', country: 'PH', length: 10 },
@@ -187,6 +188,18 @@ const handlePhoneBlur = () => {
           reader.onloadend = async () => {
             const base64Document = reader.result;
             
+            let base64ClinicPhoto = null;
+            if (clinicPhoto) {
+              const photoReader = new FileReader();
+              await new Promise((resolve) => {
+                photoReader.onloadend = () => {
+                  base64ClinicPhoto = photoReader.result;
+                  resolve();
+                };
+                photoReader.readAsDataURL(clinicPhoto);
+              });
+            }
+
             // Create a unique ID
             const id = Date.now().toString();
             
@@ -198,6 +211,7 @@ const handlePhoneBlur = () => {
               password,
               clinic: {
                 name: clinicName,
+                photo: base64ClinicPhoto,
                 address: {
                   street: address.street,
                   barangay: address.barangay,
@@ -244,6 +258,7 @@ const handlePhoneBlur = () => {
               setShowClinicForm(false);
               setShowSignUpForm(false);
               setSelectedRole(null);
+              setClinicPhoto(null);
               setFullName('');
               setEmail('');
               setPassword('');
@@ -377,6 +392,15 @@ const handlePhoneBlur = () => {
       setDocument(file);
     } else {
       toast.error('Please upload a PDF file');
+    }
+  };
+
+  const handleClinicPhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setClinicPhoto(file);
+    } else {
+      toast.error('Please upload an image file');
     }
   };
 
@@ -528,8 +552,26 @@ const handlePhoneBlur = () => {
               <h2>CLINIC DETAILS</h2>
               <p>Please provide your clinic information</p>
 
-              <div className="input-field">
-                <input type="text" placeholder="Clinic Name" value={clinicName} onChange={(e) => setClinicName(e.target.value)}/>
+              <div className="clinic-info-container">
+                <div className="input-field clinic-name">
+                  <input type="text" placeholder="Clinic Name" value={clinicName} onChange={(e) => setClinicName(e.target.value)}/>
+                </div>
+                
+                <div className="clinic-photo-upload">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleClinicPhotoChange}
+                    className="file-input"
+                  />
+                  <label className="photo-upload-label">
+                    <Icon icon="mdi:camera" className="camera-icon" />
+                    <span>Add Photo</span>
+                  </label>
+                  {clinicPhoto && (
+                    <div className="photo-selected-indicator"></div>
+                  )}
+                </div>
               </div>
 
               <div className="day-input">

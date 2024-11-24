@@ -324,3 +324,67 @@
 .submit-btn {
   margin-top: 20px;
 }
+
+.clinic-info-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 61px;
+  width: 77%;
+  margin-bottom: 10px;
+}
+
+.clinic-info-container .input-field {
+  width: 100%;
+  margin: 0;
+}
+
+.clinic-info-container .clinic-photo-upload {
+  width: 100%;
+  height: 42px;
+  position: relative;
+  border: 1px solid #000;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ddd;
+  margin-left: 24px;
+  margin-right: 20%;
+}
+
+.clinic-photo-upload .file-input {
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.photo-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  font-size: 8px;
+  color: #000;
+}
+
+.camera-icon {
+  font-size: 16px;
+  color: #000;
+  margin-bottom: 2px;
+}
+
+.photo-selected-indicator {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 8px;
+  height: 8px;
+  background-color: #4CAF50;
+  border-radius: 50%;
+}

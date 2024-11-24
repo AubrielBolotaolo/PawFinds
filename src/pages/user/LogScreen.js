@@ -12,24 +12,51 @@ function LogScreen() {
     const fetchAppointments = async () => {
       try {
         const userId = localStorage.getItem('userId');
-        const response = await fetch(`http://localhost:3001/appointments?userId=${userId}`);
-        if (!response.ok) throw new Error('Failed to fetch appointments');
-        const data = await response.json();
-        const formattedAppointments = data.map(appointment => ({
-          id: appointment.id,
-          date: new Date(appointment.date),
-          time: appointment.time,
-          status: appointment.status || 'pending',
-          clinic: {
-            name: appointment.clinicName || 'Clinic Name',
-          },
-          pet: {
-            name: appointment.petName || 'Pet Name',
-            breed: appointment.breed || 'Breed',
-          },
-          service: appointment.service || 'Service Type'
-        }));
-        setAppointments(formattedAppointments);
+        
+        // Fetch all required data
+        const [appointmentsRes, veterinariansRes, petOwnersRes] = await Promise.all([
+          fetch(`http://localhost:3001/appointments`),
+          fetch(`http://localhost:3001/veterinarians`),
+          fetch(`http://localhost:3001/petOwners/${userId}`)
+        ]);
+
+        const appointments = await appointmentsRes.json();
+        const veterinarians = await veterinariansRes.json();
+        const petOwnerData = await petOwnersRes.json();
+
+        // Create maps for quick lookup
+        const clinicsMap = new Map(
+          veterinarians.map(vet => [vet.id, vet.clinic])
+        );
+        const petsMap = new Map(
+          petOwnerData.pets.map(pet => [pet.id, pet])
+        );
+
+        // Filter and format appointments
+        const userAppointments = appointments
+          .filter(apt => apt.userId === userId)
+          .map(appointment => ({
+            id: appointment.id,
+            date: new Date(appointment.date),
+            time: appointment.time,
+            status: appointment.status || 'pending',
+            clinic: {
+              name: clinicsMap.get(appointment.clinicId)?.name || 'Unknown Clinic',
+              address: {
+                street: clinicsMap.get(appointment.clinicId)?.address?.street || 'Unknown Street',
+                barangay: clinicsMap.get(appointment.clinicId)?.address?.barangay || 'Unknown Barangay',
+                city: clinicsMap.get(appointment.clinicId)?.address?.city || 'Unknown City'
+              }
+            },
+            pet: {
+              name: petsMap.get(appointment.petId)?.name || 'Unknown Pet',
+              breed: petsMap.get(appointment.petId)?.breed || 'Unknown Breed'
+            },
+            service: appointment.service || 'Service Type'
+          }));
+
+        console.log('Final formatted appointments:', userAppointments);
+        setAppointments(userAppointments);
       } catch (error) {
         console.error('Error fetching appointments:', error);
         toast.error('Failed to load appointments');
@@ -128,7 +155,7 @@ function LogScreen() {
                 </div>
                 <div className="detail-item">
                   <Icon icon="mdi:hospital-building" />
-                  <span>{appointment.clinic.name}</span>
+                  <span>{appointment.clinic.name} ({appointment.clinic.address.street}, {appointment.clinic.address.barangay}, {appointment.clinic.address.city})</span>
                 </div>
                 <div className="detail-item">
                   <Icon icon="mdi:paw" />

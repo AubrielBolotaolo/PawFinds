@@ -27,8 +27,49 @@ function AppointmentScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedTime, setSelectedTime] = useState('09:00');
   const navigate = useNavigate();
-  const CLINICS_PER_PAGE = 4;
   const [currentClinicPage, setCurrentClinicPage] = useState(0);
+  const CLINICS_PER_PAGE = 4;
+
+  const handleConfirmAppointment = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        toast.error('User not authenticated');
+        return;
+      }
+
+      const appointmentData = {
+        userId,
+        petId: selectedPet.id,
+        clinicId: selectedClinic.id,
+        date: selectedDate,
+        time: selectedTime,
+        status: 'pending',
+        service: selectedService,
+        symptoms: selectedSymptoms
+      };
+
+      console.log('Saving appointment data:', appointmentData);
+
+      const response = await fetch('http://localhost:3001/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(appointmentData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create appointment');
+      }
+
+      toast.success('Appointment scheduled successfully!');
+      setStep('success');
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      toast.error('Failed to schedule appointment');
+    }
+  };
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -65,15 +106,15 @@ function AppointmentScreen() {
         if (!response.ok) throw new Error('Failed to fetch clinics');
         const data = await response.json();
         
-        const uniqueClinics = data.reduce((acc, current) => {
-          const isDuplicate = acc.find(item => item.id === current.id);
-          if (!isDuplicate) {
-            acc.push(current);
-          }
-          return acc;
-        }, []);
+        console.log('Raw clinic data:', data);
         
-        setClinics(uniqueClinics);
+        const healthClinics = data.filter(vet => 
+          vet.role === 'veterinarian' && vet.clinic
+        );
+        
+        console.log('Filtered clinics:', healthClinics);
+        
+        setClinics(healthClinics);
       } catch (error) {
         console.error('Error fetching clinics:', error);
         toast.error('Failed to load veterinary clinics');
@@ -156,19 +197,54 @@ function AppointmentScreen() {
   };
 
   const isWorkingDay = (date) => {
-    if (!selectedClinic) return false;
-    const day = date.getDay();
-    const workingDays = {
-      'Mon-Sat': [1, 2, 3, 4, 5, 6],
-      'Mon-Fri': [1, 2, 3, 4, 5],
+    if (!selectedClinic?.clinic?.schedule?.days) return false;
+    
+    const dayMap = {
+      'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0
     };
     
-    return workingDays[`${selectedClinic.clinic.schedule.days.start}-${selectedClinic.clinic.schedule.days.end}`]?.includes(day);
+    const start = dayMap[selectedClinic.clinic.schedule.days.start];
+    const end = dayMap[selectedClinic.clinic.schedule.days.end];
+    const currentDay = date.getDay();
+    
+    if (start <= end) {
+      return currentDay >= start && currentDay <= end;
+    } else {
+      // Handles cases like "Sun-Fri"
+      return currentDay >= start || currentDay <= end;
+    }
   };
 
-  const handlePageChange = (newPage) => {
-    setCurrentClinicPage(newPage);
-    setSelectedClinic(null); // Reset selection when changing pages
+  const isDateWithinClinicSchedule = (date) => {
+    if (!selectedClinic?.clinic?.schedule?.days) {
+      return false;
+    }
+
+    // Get clinic schedule
+    const { start: startDay, end: endDay } = selectedClinic.clinic.schedule.days;
+    
+    // Map for converting day names to numbers (0-6)
+    const dayToNumber = {
+      'Sunday': 0, 'Sun': 0,
+      'Monday': 1, 'Mon': 1,
+      'Tuesday': 2, 'Tue': 2,
+      'Wednesday': 3, 'Wed': 3,
+      'Thursday': 4, 'Thu': 4,
+      'Friday': 5, 'Fri': 5,
+      'Saturday': 6, 'Sat': 6
+    };
+
+    // Get numeric values
+    const clinicStartDay = dayToNumber[startDay];
+    const clinicEndDay = dayToNumber[endDay];
+    const currentDayOfWeek = date.getDay();
+
+    // Handle week wrap-around (e.g., Saturday to Wednesday)
+    if (clinicStartDay <= clinicEndDay) {
+      return currentDayOfWeek >= clinicStartDay && currentDayOfWeek <= clinicEndDay;
+    } else {
+      return currentDayOfWeek >= clinicStartDay || currentDayOfWeek <= clinicEndDay;
+    }
   };
 
   const renderContent = () => {
@@ -318,6 +394,7 @@ function AppointmentScreen() {
 
         case 'clinic-selection':
           const totalClinicPages = Math.ceil(clinics.length / CLINICS_PER_PAGE);
+          
           const startIndex = currentClinicPage * CLINICS_PER_PAGE;
           const displayedClinics = clinics.slice(startIndex, startIndex + CLINICS_PER_PAGE);
 
@@ -329,10 +406,21 @@ function AppointmentScreen() {
                   <div
                     key={clinic.id}
                     className={`clinic-card ${selectedClinic?.id === clinic.id ? 'selected' : ''}`}
-                    onClick={() => setSelectedClinic(clinic)}
+                    onClick={() => handleClinicSelect(clinic)}
                   >
-                    <h3>{clinic.clinic?.name || 'Unnamed Clinic'}</h3>
-                    {clinic.clinic?.schedule && (
+                   <div className="clinic-card-inner">
+                    <img 
+                      src={clinic.clinic?.photo || 'default-clinic-image.jpg'} 
+                      alt={clinic.clinic?.name}
+                      className="clinic-thumbnail"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'default-clinic-image.jpg';
+                      }}
+                    />
+                    <div className="clinic-info">
+                      <h3>{clinic.clinic?.name || 'Unnamed Clinic'}</h3>
+                      {clinic.clinic?.schedule && (
                       <>
                         <p>
                           <Icon icon="mdi:clock-outline" />
@@ -349,6 +437,8 @@ function AppointmentScreen() {
                       {clinic.clinic?.address?.city || 'No address'}
                     </p>
                   </div>
+                </div>
+              </div>
                 ))}
               </div>
 
@@ -357,7 +447,7 @@ function AppointmentScreen() {
                   <button 
                     className="pagination-button"
                     disabled={currentClinicPage === 0}
-                    onClick={() => handlePageChange(currentClinicPage - 1)}
+                    onClick={() => setCurrentClinicPage(prev => Math.max(0, prev - 1))}
                   >
                     Previous
                   </button>
@@ -367,7 +457,7 @@ function AppointmentScreen() {
                   <button 
                     className="pagination-button"
                     disabled={currentClinicPage >= totalClinicPages - 1}
-                    onClick={() => handlePageChange(currentClinicPage + 1)}
+                    onClick={() => setCurrentClinicPage(prev => Math.min(totalClinicPages - 1, prev + 1))}
                   >
                     Next
                   </button>
@@ -406,10 +496,31 @@ function AppointmentScreen() {
 
                 <div className="calendar-container">
                   <Calendar
-                    onChange={setSelectedDate}
+                    onChange={(date) => {
+                      // Check if clinic schedule exists
+                      if (!selectedClinic?.clinic?.schedule?.days) {
+                        toast.error('Clinic schedule not available');
+                        return;
+                      }
+
+                      // Check if selected date is within clinic's working days
+                      if (isDateWithinClinicSchedule(date)) {
+                        setSelectedDate(date);
+                      } else {
+                        const { start, end } = selectedClinic.clinic.schedule.days;
+                        toast.error(`This clinic only operates from ${start} to ${end}`);
+                      }
+                    }}
                     value={selectedDate}
                     minDate={new Date()}
-                    tileDisabled={({ date }) => !isWorkingDay(date)}
+                    tileDisabled={({ date }) => {
+                      // Disable dates not within clinic schedule
+                      return !isDateWithinClinicSchedule(date);
+                    }}
+                    tileClassName={({ date }) => {
+                      // Optional: Add custom class for available dates
+                      return isDateWithinClinicSchedule(date) ? 'available-date' : '';
+                    }}
                     view="month"
                   />
                 </div>
@@ -440,9 +551,13 @@ function AppointmentScreen() {
                 <h3>Selected Clinic</h3>
                 <div className="clinic-details">
                   <img 
-                    src={selectedClinic?.clinic.image || 'default-clinic-image.jpg'} 
-                    alt={selectedClinic?.clinic.name}
-                    className="clinic-image"
+                    src={selectedClinic?.clinic?.photo || 'default-clinic-image.jpg'} 
+                    alt={selectedClinic?.clinic?.name}
+                    className="selected-clinic-image"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'default-clinic-image.jpg';
+                    }}
                   />
                   <div className="clinic-info">
                     <h4>Clinic: {selectedClinic?.clinic.name}</h4>
@@ -467,78 +582,59 @@ function AppointmentScreen() {
         );
 
       case 'confirmation':
+        const appointmentDate = new Date(selectedDate);
+        const month = appointmentDate.toLocaleString('default', { month: 'short' }).toUpperCase();
+        const day = appointmentDate.getDate().toString().padStart(2, '0');
+        const fullDate = appointmentDate.toLocaleDateString('en-US', { 
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+
         return (
           <div className="confirmation-section">
             <h2>Confirm Your Appointment</h2>
-            <div className="appointment-summary">
-              <div className="summary-details">
-                {selectedClinic?.clinic?.schedule && (
-                  <>
-                    <div className="detail-item">
-                      <Icon icon="mdi:clock-outline" />
-                      <span>
-                        {selectedTime}
-                        <span className="hours-note">
-                          (Open Hours: {selectedClinic.clinic.schedule.hours?.open} - {selectedClinic.clinic.schedule.hours?.close})
-                        </span>
-                      </span>
-                    </div>
-                    <div className="detail-item">
-                      <Icon icon="mdi:map-marker" />
-                      <span>
-                        {selectedClinic.clinic.address?.street}, 
-                        {selectedClinic.clinic.address?.barangay}, 
-                        {selectedClinic.clinic.address?.city}
-                      </span>
-                    </div>
-                    <div className="detail-item">
-                      <Icon icon="mdi:hospital-building" />
-                      <span>{selectedClinic.clinic.name}</span>
-                    </div>
-                  </>
-                )}
+            
+            <div className="header-container">
+              <div className="date-badge">
+                <div className="month">{month}</div>
+                <div className="day">{day}</div>
+              </div>
+              <div className="note-container">
+                <p className="note">Please note your Appointment Schedule.</p>
               </div>
             </div>
+
+            <div className="appointment-summary-card">
+              <div className="appointment-details">
+                <div className="detail-item">
+                  <Icon icon="material-symbols:calendar-month" />
+                  {fullDate}
+                </div>
+
+                <div className="detail-item">
+                  <Icon icon="mdi:map-marker" />
+                  {selectedClinic?.clinic?.address?.street}, {selectedClinic?.clinic?.address?.city}, {selectedClinic?.clinic?.address?.barangay}
+                </div>
+
+                <div className="detail-item">
+                  <Icon icon="mdi:clock-outline" />
+                  {selectedTime} <span className="hours-note">(Open Hours: {selectedClinic?.clinic?.schedule?.hours?.open} - {selectedClinic?.clinic?.schedule?.hours?.close})</span>
+                </div>
+
+                <div className="detail-item">
+                  <Icon icon="mdi:hospital-building" />
+                  {selectedClinic?.clinic?.name}
+                </div>
+              </div>
+            </div>
+
             <div className="confirmation-actions">
-              <button 
-                className="back-button"
-                onClick={() => setStep('schedule')}
-              >
+              <button className="back-button" onClick={() => setStep('schedule')}>
                 Back
               </button>
-              <button 
-                className="confirm-button"
-                onClick={async () => {
-                  try {
-                    const appointmentData = {
-                      petId: selectedPet.id,
-                      clinicId: selectedClinic.id,
-                      userId: localStorage.getItem('userId'),
-                      service: selectedService,
-                      symptoms: selectedSymptoms,
-                      date: selectedDate,
-                      time: selectedTime,
-                      status: 'pending',
-                      createdAt: new Date()
-                    };
-
-                    const response = await fetch('http://localhost:3001/appointments', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify(appointmentData)
-                    });
-
-                    if (!response.ok) throw new Error('Failed to schedule appointment');
-
-                    setStep('success');
-                  } catch (error) {
-                    console.error('Error scheduling appointment:', error);
-                    toast.error('Failed to schedule appointment');
-                  }
-                }}
-              >
+              <button className="confirm-button" onClick={handleConfirmAppointment}>
                 Confirm
               </button>
             </div>
@@ -556,7 +652,9 @@ function AppointmentScreen() {
               <p>Your appointment is now being scheduled successfully. Don't forget your appointment, Fur Parent!</p>
               <button 
                 className="view-appointments-button"
-                onClick={() => navigate('/logs')}
+                onClick={() => {
+                  navigate('/HomeScreen', { state: { activeNavItem: 'appointment-logs' } });
+                }}
               >
                 View My Appointments
               </button>
