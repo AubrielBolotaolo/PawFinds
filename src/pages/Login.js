@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {Icon} from '@iconify/react';
 import { Toaster, toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +28,13 @@ function Login({isOpen, onClose, onHomeScreenClick}) {
   const [document, setDocument] = useState(null);
   const [fullName, setFullName] = useState('');
   const [clinicPhoto, setClinicPhoto] = useState(null);
+  const [showStreetDropdown, setShowStreetDropdown] = useState(false);
+  const [showBarangayDropdown, setShowBarangayDropdown] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [filteredStreets, setFilteredStreets] = useState([]);
+  const [filteredBarangays, setFilteredBarangays] = useState([]);
+  const [filteredCities, setFilteredCities] = useState([]);
+  const [locations, setLocations] = useState(null);
 
   const countryCodes = [
     { code: '+63', country: 'PH', length: 10 },
@@ -404,14 +411,62 @@ const handlePhoneBlur = () => {
     }
   };
 
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/caragaLocations');
+        const data = await response.json();
+        setLocations(data);
+        setFilteredCities(data.cities.map(city => city.name));
+        setFilteredStreets(data.cities.flatMap(city => city.streets));
+        setFilteredBarangays(data.cities.flatMap(city => city.barangays));
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+    fetchLocations();
+  }, []);
+
+  const handleStreetSearch = (value) => {
+    setAddress({ ...address, street: value });
+    if (locations) {
+      setFilteredStreets(locations.cities.flatMap(city => 
+        city.streets.filter(street => 
+          street.toLowerCase().includes(value.toLowerCase())
+        )
+      ));
+    }
+  };
+
+  const handleBarangaySearch = (value) => {
+    setAddress({ ...address, barangay: value });
+    if (locations) {
+      setFilteredBarangays(locations.cities.flatMap(city => 
+        city.barangays.filter(barangay => 
+          barangay.toLowerCase().includes(value.toLowerCase())
+        )
+      ));
+    }
+  };
+
+  const handleCitySearch = (value) => {
+    setAddress({ ...address, city: value });
+    if (locations) {
+      setFilteredCities(locations.cities
+        .map(city => city.name)
+        .filter(city => 
+          city.toLowerCase().includes(value.toLowerCase())
+        )
+      );
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-container" onClick={e => e.stopPropagation()}>   
-        <button className="modal-close" onClick={onClose}>
-          <Icon icon="mdi:close" />
-        </button>
+          <Icon icon="mdi:close" className="close-icon" onClick={onClose}/>
       
         <div className="modal-side-panel">
           <h2>{signUpMode ? 'Already have an account?' : 'Are you still a newbie?'}</h2>
@@ -616,16 +671,105 @@ const handlePhoneBlur = () => {
 
                 <div className="address-container">
                   <div className="input-field">
-                    <input type="text" placeholder="Street" value={address.street} onChange={(e) => setAddress({...address, street: e.target.value})}/>
+                    <input 
+                      type="text"
+                      placeholder="Street"
+                      value={address.street}
+                      onChange={(e) => handleStreetSearch(e.target.value)}
+                      onClick={() => setShowStreetDropdown(true)}
+                    />
+                    <Icon 
+                      icon="mdi:chevron-down" 
+                      className="down-icon"
+                      onClick={() => setShowStreetDropdown(!showStreetDropdown)}
+                    />
+                    {showStreetDropdown && (
+                      <div className="dropdown-list">
+                        {filteredStreets.map((street, index) => (
+                          <div 
+                            key={index}
+                            className="dropdown-item"
+                            onClick={() => {
+                              setAddress({ ...address, street });
+                              setShowStreetDropdown(false);
+                            }}
+                          >
+                            {street}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
                   <div className="input-field">
-                    <input type="text" placeholder="Barangay" value={address.barangay} onChange={(e) => setAddress({...address, barangay: e.target.value})}/>
+                    <input 
+                      type="text"
+                      placeholder="Barangay"
+                      value={address.barangay}
+                      onChange={(e) => handleBarangaySearch(e.target.value)}
+                      onClick={() => setShowBarangayDropdown(true)}
+                    />
+                    <Icon 
+                      icon="mdi:chevron-down" 
+                      className="down-icon"
+                      onClick={() => setShowBarangayDropdown(!showBarangayDropdown)}
+                    />
+                    {showBarangayDropdown && (
+                      <div className="dropdown-list">
+                        {filteredBarangays.map((barangay, index) => (
+                          <div 
+                            key={index}
+                            className="dropdown-item"
+                            onClick={() => {
+                              setAddress({ ...address, barangay });
+                              setShowBarangayDropdown(false);
+                            }}
+                          >
+                            {barangay}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
                   <div className="input-field">
-                    <input type="text" placeholder="Municipality/City" value={address.city} onChange={(e) => setAddress({...address, city: e.target.value})}/>
+                    <input 
+                      type="text"
+                      placeholder="City"
+                      value={address.city}
+                      onChange={(e) => handleCitySearch(e.target.value)}
+                      onClick={() => setShowCityDropdown(true)}
+                    />
+                    <Icon 
+                      icon="mdi:chevron-down" 
+                      className="down-icon"
+                      onClick={() => setShowCityDropdown(!showCityDropdown)}
+                    />
+                    {showCityDropdown && (
+                      <div className="dropdown-list">
+                        {filteredCities.map((city, index) => (
+                          <div 
+                            key={index}
+                            className="dropdown-item"
+                            onClick={() => {
+                              setAddress({ ...address, city });
+                              setShowCityDropdown(false);
+                            }}
+                          >
+                            {city}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+
                   <div className="input-field">
-                    <input type="text" placeholder="Zip Code" value={address.zipCode} onChange={(e) => setAddress({...address, zipCode: e.target.value})}/>
+                    <input 
+                      type="text"
+                      placeholder="Zip Code"
+                      value={address.zipCode}
+                      onChange={(e) => setAddress({...address, zipCode: e.target.value})}
+                    />
                   </div>
                 </div>
 
