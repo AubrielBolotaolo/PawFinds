@@ -7,6 +7,8 @@ function LogScreen() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, pending, completed, cancelled
+  const [sortOrder, setSortOrder] = useState('desc'); // 'desc' for newest first (default)
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -73,6 +75,45 @@ function LogScreen() {
     return appointment.status === filter;
   });
 
+  const sortedAppointments = [...filteredAppointments].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+  });
+
+  const searchedAppointments = sortedAppointments.filter(appointment => {
+    const searchString = searchTerm.toLowerCase();
+    const appointmentDate = new Date(appointment.date);
+    
+    // Format date in different ways for flexible searching
+    const formattedDate = {
+      full: appointmentDate.toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric' 
+      }).toLowerCase(),
+      short: appointmentDate.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      }).toLowerCase(),
+      monthDay: `${appointmentDate.getDate()} ${appointmentDate.toLocaleDateString('en-US', { month: 'short' })}`.toLowerCase(),
+      monthOnly: appointmentDate.toLocaleDateString('en-US', { month: 'long' }).toLowerCase(),
+      monthShort: appointmentDate.toLocaleDateString('en-US', { month: 'short' }).toLowerCase()
+    };
+
+    return (
+      appointment.clinic.name.toLowerCase().includes(searchString) ||
+      appointment.pet.name.toLowerCase().includes(searchString) ||
+      appointment.service.toLowerCase().includes(searchString) ||
+      appointment.status.toLowerCase().includes(searchString) ||
+      formattedDate.full.includes(searchString) ||
+      formattedDate.short.includes(searchString) ||
+      formattedDate.monthDay.includes(searchString) ||
+      formattedDate.monthOnly.includes(searchString) ||
+      formattedDate.monthShort.includes(searchString)
+    );
+  });
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'var(--warning-color, #ffc107)';
@@ -122,17 +163,38 @@ function LogScreen() {
           >
             Cancelled
           </button>
+          <div className="search-container">
+            <div className="search-bar">
+              <Icon icon="mdi:magnify" className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search appointments..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          <button 
+            className="filter-btn sort-btn"
+            onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+          >
+            <Icon 
+              icon={sortOrder === 'desc' ? "mdi:sort-descending" : "mdi:sort-ascending"} 
+              className="sort-icon"
+            />
+            {sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}
+          </button>
         </div>
       </div>
 
       <div className="appointments-list">
-        {filteredAppointments.length === 0 ? (
+        {searchedAppointments.length === 0 ? (
           <div className="no-appointments">
             <Icon icon="mdi:calendar-blank" />
             <p>No appointments found</p>
           </div>
         ) : (
-          filteredAppointments.map(appointment => (
+          searchedAppointments.map(appointment => (
             <div key={appointment.id} className="appointment-card">
               <div className="appointment-header">
                 <div className="date-block">

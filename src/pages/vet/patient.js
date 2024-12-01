@@ -3,10 +3,47 @@ import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 import '../../styles/patients.css';
 
+function MedicalHistoryModal({ patient, onClose }) {
+    if (!patient) return null;
+
+    return (
+        <div className="medical-history-modal">
+            <div className="modal-content">
+                <div className="modal-header">
+                    <h3>{patient.name}'s Medical History</h3>
+                    <button className="close-button" onClick={onClose}>×</button>
+                </div>
+                <div className="modal-body">
+                    {patient.medicalHistory && patient.medicalHistory.length > 0 ? (
+                        <div className="history-list">
+                            {patient.medicalHistory.map((record, index) => (
+                                <div key={index} className="history-item">
+                                    <div className="history-date">
+                                        {new Date(record.date).toLocaleDateString()}
+                                    </div>
+                                    <div className="history-details">
+                                        <p><strong>Diagnosis:</strong> {record.diagnosis}</p>
+                                        <p><strong>Treatment:</strong> {record.treatment}</p>
+                                        <p><strong>Veterinarian:</strong> {record.veterinarian}</p>
+                                        <p><strong>Notes:</strong> {record.notes}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="no-history">No medical history available</p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function FurPatients() {
     const [patients, setPatients] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [selectedPatient, setSelectedPatient] = useState(null);
 
     useEffect(() => {
         fetchPatients();
@@ -16,37 +53,28 @@ function FurPatients() {
         try {
             const currentVetId = localStorage.getItem('userId');
             
-            // Fetch appointments and pet owners
-            const [appointmentsRes, petOwnersRes] = await Promise.all([
-                fetch('http://localhost:3001/appointments'),
-                fetch('http://localhost:3001/petOwners')
+            // Fetch fur patients and vet data
+            const [furPatientsRes, vetRes] = await Promise.all([
+                fetch('http://localhost:3001/furPatients'),
+                fetch(`http://localhost:3001/veterinarians/${currentVetId}`)
             ]);
 
-            const appointments = await appointmentsRes.json();
-            const petOwners = await petOwnersRes.json();
+            if (!furPatientsRes.ok || !vetRes.ok) {
+                throw new Error('Failed to fetch data');
+            }
 
-            // Get unique pets from appointments for this vet
-            const vetAppointments = appointments.filter(apt => apt.clinicId === currentVetId);
-            const uniquePetIds = [...new Set(vetAppointments.map(apt => apt.petId))];
+            const furPatients = await furPatientsRes.json();
+            const vetData = await vetRes.json();
 
-            // Get pet details
-            const patientsData = uniquePetIds.map(petId => {
-                const petOwner = petOwners.find(owner => 
-                    owner.pets.some(pet => pet.id === petId)
-                );
-                const pet = petOwner?.pets.find(pet => pet.id === petId);
-                
-                if (pet) {
-                    return {
-                        ...pet,
-                        ownerName: petOwner.fullName,
-                        ownerPhone: petOwner.phoneNumber
-                    };
-                }
-                return null;
-            }).filter(pet => pet !== null);
+            // Filter patients for the current vet's clinic
+            const clinicPatients = furPatients.filter(patient => 
+                patient.medicalHistory?.some(record => 
+                    record.vetId === currentVetId || 
+                    record.veterinarian === vetData.fullName
+                )
+            );
 
-            setPatients(patientsData);
+            setPatients(clinicPatients);
             setLoading(false);
         } catch (error) {
             console.error('Error fetching patients:', error);
@@ -108,26 +136,49 @@ function FurPatients() {
                                     <strong>Owner:</strong> {patient.ownerName}
                                 </div>
                                 <div className="info-row">
-                                    <strong>Contact:</strong> {patient.ownerPhone}
+                                    <strong>Weight:</strong> {patient.weight}
                                 </div>
                             </div>
                             <div className="patient-details">
                                 <div className="details-section">
-                                    <h4>Special Needs</h4>
-                                    <p>{patient.specialNeeds || 'None'}</p>
+                                    <h4>Allergies</h4>
+                                    <p>{patient.allergies || 'None'}</p>
                                 </div>
                                 <div className="details-section">
-                                    <h4>Medical History</h4>
-                                    <p>{patient.medicalHistory || 'None'}</p>
+                                    <h4>Existing Conditions</h4>
+                                    <p>{patient.existingConditions || 'None'}</p>
                                 </div>
                                 <div className="details-section">
-                                    <h4>Other Info</h4>
-                                    <p>{patient.otherInfo || 'None'}</p>
+                                    <h4>Latest Medical Record</h4>
+                                    {patient.medicalHistory && patient.medicalHistory.length > 0
+                                        ? (
+                                            <p>{patient.medicalHistory[patient.medicalHistory.length - 1].description}</p>
+                                        ) : (
+                                            <p>No medical records available</p>
+                                        )
+                                    }
                                 </div>
+                            </div>
+                            <div className="patient-actions">
+                                <button 
+                                    className="medical-history-btn"
+                                    onClick={() => setSelectedPatient(patient)}
+                                >
+                                    <Icon icon="mdi:history" className="button-icon" />
+                                    Medical History
+                                </button>
                             </div>
                         </div>
                     ))}
                 </div>
+            )}
+
+            {/* Medical History Modal */}
+            {selectedPatient && (
+                <MedicalHistoryModal 
+                    patient={selectedPatient} 
+                    onClose={() => setSelectedPatient(null)} 
+                />
             )}
         </div>
     );

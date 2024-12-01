@@ -35,6 +35,17 @@ function Login({isOpen, onClose, onHomeScreenClick}) {
   const [filteredBarangays, setFilteredBarangays] = useState([]);
   const [filteredCities, setFilteredCities] = useState([]);
   const [locations, setLocations] = useState(null);
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [verificationMethod, setVerificationMethod] = useState(null); // 'email' or 'phone'
+  const [otpCode, setOtpCode] = useState('');
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [showNewPasswordInput, setShowNewPasswordInput] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetPhone, setResetPhone] = useState('');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const countryCodes = [
     { code: '+63', country: 'PH', length: 10 },
@@ -159,8 +170,127 @@ const handlePhoneBlur = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (signUpMode && showDocumentUpload) {
+      if (!document) {
+        toast.error('Please upload your credentials');
+        return;
+      }
+
+      try {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Document = reader.result;
+          let base64ClinicPhoto = null;
+          
+          if (clinicPhoto) {
+            const photoReader = new FileReader();
+            await new Promise((resolve) => {
+              photoReader.onloadend = () => {
+                base64ClinicPhoto = photoReader.result;
+                resolve();
+              };
+              photoReader.readAsDataURL(clinicPhoto);
+            });
+          }
+
+          const id = Date.now().toString();
+          
+          // Store media data separately
+          const mediaResponse = await fetch('http://localhost:3001/media', {
+            method: 'GET'
+          });
+          const mediaData = await mediaResponse.json();
+          
+          // Add new media entries
+          const updatedMedia = {
+            ...mediaData,
+            clinicPhotos: [
+              ...mediaData.clinicPhotos,
+              {
+                id: id,
+                data: base64ClinicPhoto
+              }
+            ],
+            credentials: [
+              ...mediaData.credentials,
+              {
+                id: id,
+                data: base64Document
+              }
+            ]
+          };
+
+          // Update media.json
+          await fetch('http://localhost:3001/media', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedMedia)
+          });
+
+          // Create user data without base64 strings
+          const userData = {
+            id,
+            fullName,
+            email,
+            phoneNumber: countryCode + phoneNumber,
+            password,
+            clinic: {
+              name: clinicName,
+              photoId: id, // Reference to media.json
+              address: {
+                street: address.street,
+                barangay: address.barangay,
+                city: address.city,
+                zipCode: address.zipCode
+              },
+              schedule: {
+                days: {
+                  start: openingDays.start,
+                  end: openingDays.end
+                },
+                hours: {
+                  open: openingHours.open,
+                  close: openingHours.close
+                }
+              },
+              services: selectedServices
+            },
+            credentialId: id, // Reference to media.json
+            status: 'pending',
+            role: 'veterinarian',
+            createdAt: new Date().toISOString()
+          };
+
+          // Store user data in db.json
+          const response = await fetch('http://localhost:3001/veterinarianRequests', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData)
+          });
+
+          if (!response.ok) {
+            throw new Error('Registration failed');
+          }
+
+          toast.success('Registration submitted successfully! Please wait for admin approval.');
+          onClose();
+          
+          // Reset form fields...
+          // (existing reset code remains the same)
+        };
+
+        reader.readAsDataURL(document);
+      } catch (error) {
+        console.error('Registration error:', error);
+        toast.error('Registration failed. Please try again.');
+      }
+      return;
+    }
 
     if (!email || !password) {
       toast.error('Please fill in all fields');
@@ -235,15 +365,16 @@ const handlePhoneBlur = () => {
                     close: openingHours.close
                   }
                 },
-                services: ["General Checkup", "Vaccination"]
+                services: selectedServices
               },
-              credentials: base64Document,
+              document: base64Document,
+              status: 'pending',
               role: 'veterinarian',
               createdAt: new Date().toISOString()
             };
   
             try {
-              const response = await fetch('http://localhost:3001/veterinarians', {
+              const response = await fetch('http://localhost:3001/veterinarianRequests', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -256,9 +387,9 @@ const handlePhoneBlur = () => {
               }
   
               const result = await response.json();
-              console.log('Registration successful:', result);
+              console.log('Registration request submitted:', result);
   
-              toast.success('Registration successful!');
+              toast.success('Registration request submitted! Please wait for admin approval.');
               // Reset all form states
               setSignUpMode(false);
               setShowDocumentUpload(false);
@@ -281,6 +412,7 @@ const handlePhoneBlur = () => {
                 zipCode: ''
               });
               setDocument(null);
+              setSelectedServices([]);
               
             } catch (error) {
               console.error('Registration error:', error);
@@ -461,6 +593,221 @@ const handlePhoneBlur = () => {
     }
   };
 
+  const ForgotPasswordModal = () => {
+    const handleVerificationSubmit = () => {
+        // Simulate sending OTP
+        toast.success(`OTP sent to your ${verificationMethod}`);
+        setShowOtpInput(true);
+    };
+
+    const handleOtpSubmit = () => {
+        // Accept any OTP as this is a dummy implementation
+        setShowOtpInput(false);
+        setShowNewPasswordInput(true);
+    };
+
+    const handlePasswordReset = async () => {
+        if (newPassword !== confirmNewPassword) {
+            toast.error('Passwords do not match');
+            return;
+        }
+
+        if (!validatePassword(newPassword)) {
+            return;
+        }
+
+        try {
+            // Find user based on verification method
+            const identifier = verificationMethod === 'email' ? resetEmail : resetPhone;
+            const searchParam = verificationMethod === 'email' ? 'email' : 'phoneNumber';
+
+            const [petOwnersRes, veterinariansRes] = await Promise.all([
+                fetch(`http://localhost:3001/petOwners?${searchParam}=${identifier}`),
+                fetch(`http://localhost:3001/veterinarians?${searchParam}=${identifier}`)
+            ]);
+
+            const petOwners = await petOwnersRes.json();
+            const veterinarians = await veterinariansRes.json();
+
+            const user = [...petOwners, ...veterinarians][0];
+
+            if (user) {
+                const endpoint = petOwners.length > 0 ? 'petOwners' : 'veterinarians';
+                const response = await fetch(`http://localhost:3001/${endpoint}/${user.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: newPassword })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to update password');
+                }
+
+                // Show success state instead of closing modal
+                setShowNewPasswordInput(false);
+                setShowSuccessMessage(true);
+            } else {
+                toast.error('User not found');
+            }
+        } catch (error) {
+            console.error('Error resetting password:', error);
+            toast.error('Failed to reset password');
+        }
+    };
+
+    const handleDone = () => {
+        setShowForgotPassword(false);
+        navigate('/');
+    };
+
+    const handleModalClick = (e) => {
+        // Prevent click from reaching the overlay
+        e.stopPropagation();
+    };
+
+    return (
+        <div className="modal-overlay" onClick={() => setShowForgotPassword(false)}>
+            <div className="forgot-password-modal" onClick={handleModalClick}>
+                <button className="close-button" onClick={() => setShowForgotPassword(false)}>×</button>
+                
+                {!verificationMethod && (
+                    <div className="verification-method">
+                        <h2>Verification</h2>
+                        <p>Please select one option to send your OTP:</p>
+                        <div className="verification-buttons">
+                            <button onClick={() => setVerificationMethod('email')}>
+                                Verify using Email Address
+                            </button>
+                            <button onClick={() => setVerificationMethod('phone')}>
+                                Verify using Phone Number
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {verificationMethod && !showOtpInput && !showNewPasswordInput && !showSuccessMessage && (
+                    <div className="verification-form">
+                        <h2>Enter your {verificationMethod}</h2>
+                        {verificationMethod === 'email' ? (
+                            <input
+                                type="email"
+                                placeholder="Enter your email"
+                                value={resetEmail}
+                                onChange={(e) => setResetEmail(e.target.value)}
+                            />
+                        ) : (
+                            <input
+                                type="tel"
+                                placeholder="Enter your phone number"
+                                value={resetPhone}
+                                onChange={(e) => setResetPhone(e.target.value)}
+                            />
+                        )}
+                        <button onClick={handleVerificationSubmit}>Send OTP</button>
+                    </div>
+                )}
+
+                {showOtpInput && !showNewPasswordInput && !showSuccessMessage && (
+                    <div className="otp-form">
+                        <h2>{verificationMethod === 'email' ? 'Email Verification' : 'Phone Verification'}</h2>
+                        <p>Please enter the six digit code sent to</p>
+                        <p className="sent-to">{verificationMethod === 'email' ? resetEmail : resetPhone}</p>
+                        
+                        <div className="otp-input-container">
+                            {[...Array(6)].map((_, index) => (
+                                <input
+                                    key={index}
+                                    type="text"
+                                    maxLength="1"
+                                    value={otpCode[index] || ''}
+                                    onChange={(e) => {
+                                        const newOtp = otpCode.split('');
+                                        newOtp[index] = e.target.value;
+                                        setOtpCode(newOtp.join(''));
+                                        
+                                        // Auto-focus next input
+                                        if (e.target.value && index < 5) {
+                                            e.target.nextElementSibling?.focus();
+                                        }
+                                    }}
+                                    onKeyDown={(e) => {
+                                        // Handle backspace
+                                        if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+                                            const prevInput = e.target.previousElementSibling;
+                                            prevInput?.focus();
+                                        }
+                                    }}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="resend-timer">
+                            <span>Didn't receive it? Resend Code in </span>
+                            <span className="timer">00:59 (0/3)</span>
+                        </div>
+
+                        <button className="verify-btn" onClick={handleOtpSubmit}>
+                            Verify
+                        </button>
+                    </div>
+                )}
+
+                {showNewPasswordInput && !showSuccessMessage && (
+                    <div className="new-password-form">
+                        <h2>New Password</h2>
+                        <p>Set your new password for your account</p>
+                        
+                        <div className="password-input-container">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Enter New Password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                            />
+                            <Icon 
+                                icon={showPassword ? "mdi:eye-off" : "mdi:eye"} 
+                                className="password-toggle"
+                                onClick={() => setShowPassword(!showPassword)}
+                            />
+                        </div>
+
+                        <div className="password-input-container">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Confirm Password"
+                                value={confirmNewPassword}
+                                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            />
+                            <Icon 
+                                icon={showPassword ? "mdi:eye-off" : "mdi:eye"} 
+                                className="password-toggle"
+                                onClick={() => setShowPassword(!showPassword)}
+                            />
+                        </div>
+
+                        <button className="update-btn" onClick={handlePasswordReset}>
+                            Update
+                        </button>
+                    </div>
+                )}
+
+                {showSuccessMessage && (
+                    <div className="success-message">
+                        <div className="success-icon">
+                            <Icon icon="mdi:check" className="check-icon" />
+                        </div>
+                        <h2>Successfully Updated!</h2>
+                        <p>Your new password has been reset successfully</p>
+                        <button className="proceed-btn" onClick={handleDone}>
+                            Proceed
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
   if (!isOpen) return null;
 
   return (
@@ -498,7 +845,9 @@ const handlePhoneBlur = () => {
                   </div>
                 </form>
 
-                <div className="forgot-password">Forgot Password?</div>
+                <div className="forgot-password-link">
+                  <span onClick={() => setShowForgotPassword(true)}>Forgot Password?</span>
+                </div>
                 <button type="submit" className="btn" onClick={handleSubmit}>Sign In</button>
               </div>
             </>
@@ -800,6 +1149,7 @@ const handlePhoneBlur = () => {
         </div>
       </div>
       <Toaster position="bottom-right" richColors />
+      {showForgotPassword && <ForgotPasswordModal />}
     </div>
   );
 };

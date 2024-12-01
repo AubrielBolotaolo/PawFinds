@@ -5,6 +5,7 @@ import '../../styles/dashboard.css';
 import { useNavigate } from 'react-router-dom';
 import ApprovalRequests from './approval';
 import Image from '../assets/logo.png';
+import VetClinic from './vetClinic';
 
 function AdminDashboard() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -83,6 +84,14 @@ function AdminDashboard() {
           Approval Requests
         </div>
 
+        <div 
+          className={`nav-item ${activeView === 'clinics' ? 'active' : ''}`}
+          onClick={() => setActiveView('clinics')}
+        >
+          <Icon icon="mdi:hospital-building" className="icon" />
+          Approved Clinics
+        </div>
+
         <button onClick={handleLogout} className="logout-btn">
           <Icon icon="mdi:logout" className="icon"/>
           <span>Logout</span>
@@ -133,9 +142,11 @@ function AdminDashboard() {
               </div>
             </div>
           </div>
-        ) : (
+        ) : activeView === 'approvals' ? (
           <ApprovalRequests />
-        )}
+        ) : activeView === 'clinics' ? (
+          <VetClinic />
+        ) : null}
       </div>
 
       {/* Header */}

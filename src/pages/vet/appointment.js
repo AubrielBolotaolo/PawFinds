@@ -55,23 +55,93 @@ function AppointmentRequests() {
 
     const handleComplete = async (appointmentId) => {
         try {
-            const response = await fetch(`http://localhost:3001/appointments/${appointmentId}`, {
+            // Get the appointment details first
+            const appointmentRes = await fetch(`http://localhost:3001/appointments/${appointmentId}`);
+            const appointmentData = await appointmentRes.json();
+
+            // Get the pet owner's details to access pet information
+            const ownerRes = await fetch(`http://localhost:3001/petOwners/${appointmentData.userId}`);
+            const ownerData = await ownerRes.json();
+
+            // Find the specific pet
+            const pet = ownerData.pets.find(p => p.id === appointmentData.petId);
+            
+            if (!pet) {
+                throw new Error('Pet not found');
+            }
+
+            // Get current vet's details
+            const vetId = localStorage.getItem('userId');
+            const vetRes = await fetch(`http://localhost:3001/veterinarians/${vetId}`);
+            const vetData = await vetRes.json();
+
+            // Create fur patient record
+            const furPatientData = {
+                id: pet.id,
+                name: pet.name,
+                species: pet.species,
+                breed: pet.breed,
+                age: pet.age,
+                gender: pet.gender || 'Not specified',
+                weight: pet.weight || 'Not specified',
+                ownerName: ownerData.fullName,
+                ownerId: ownerData.id,
+                medicalHistory: [
+                    {
+                        date: new Date().toISOString(),
+                        diagnosis: appointmentData.service,
+                        treatment: "Initial consultation",
+                        veterinarian: vetData.fullName,
+                        vetId: vetData.id,
+                        notes: appointmentData.symptoms.join(', ')
+                    }
+                ],
+                allergies: pet.allergies || 'None',
+                existingConditions: pet.existingConditions || 'None',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            // Check if fur patient already exists
+            const furPatientsRes = await fetch('http://localhost:3001/furPatients');
+            const existingFurPatients = await furPatientsRes.json();
+            const existingPatient = existingFurPatients.find(fp => fp.id === pet.id);
+
+            if (existingPatient) {
+                // Update existing fur patient's medical history
+                await fetch(`http://localhost:3001/furPatients/${pet.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        medicalHistory: [...existingPatient.medicalHistory, ...furPatientData.medicalHistory],
+                        updatedAt: furPatientData.updatedAt
+                    })
+                });
+            } else {
+                // Create new fur patient
+                await fetch('http://localhost:3001/furPatients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(furPatientData)
+                });
+            }
+
+            // Update appointment status
+            await fetch(`http://localhost:3001/appointments/${appointmentId}`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ status: 'completed' })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    status: 'completed',
+                    completedAt: new Date().toISOString()
+                })
             });
 
-            if (response.ok) {
-                toast.success('Appointment marked as completed');
-                fetchAppointments(); // Refresh the list
-            } else {
-                throw new Error('Failed to update appointment');
-            }
+            toast.success('Appointment completed and patient record updated');
+            await fetchAppointments(); // Refresh appointments list
+
         } catch (error) {
-            console.error('Error updating appointment:', error);
-            toast.error('Failed to update appointment');
+            console.error('Error processing appointment:', error);
+            toast.error('Failed to process appointment');
         }
     };
 

@@ -97,3 +97,38 @@
     background: #f5f5f5;
     cursor: not-allowed;
   }
+  
+  .status-label {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+  
+  .status-label.approved {
+    background-color: #e6f4ea;
+    color: #1e7e34;
+  }
+  
+  .status-label.declined {
+    background-color: #fde7e9;
+    color: #dc3545;
+  }
+  
+  .status-badge {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+  
+  .status-badge.approved {
+    background-color: #e6f4ea;
+    color: #1e7e34;
+  }
+  
+  .status-badge.declined {
+    background-color: #fde7e9;
+    color: #dc3545;
+  }

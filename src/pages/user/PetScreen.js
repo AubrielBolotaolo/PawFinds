@@ -23,6 +23,13 @@ const PetScreen = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState('');
   const [fileName, setFileName] = useState('');
+  const [petData, setPetData] = useState(null);
+  const [showBreedDropdown, setShowBreedDropdown] = useState(false);
+  const [showSpeciesDropdown, setShowSpeciesDropdown] = useState(false);
+  const [showSpecialNeedsDropdown, setShowSpecialNeedsDropdown] = useState(false);
+  const [filteredBreeds, setFilteredBreeds] = useState([]);
+  const [filteredSpecies, setFilteredSpecies] = useState([]);
+  const [filteredSpecialNeeds, setFilteredSpecialNeeds] = useState([]);
 
   // Fetch pets when component mounts
   useEffect(() => {
@@ -69,19 +76,30 @@ const PetScreen = () => {
         let width = img.width;
         let height = img.height;
 
-        // Calculate new dimensions if width exceeds maxWidth
+        // More aggressive resizing if image is large
         if (width > maxWidth) {
           height = Math.round((height * maxWidth) / width);
           width = maxWidth;
         }
 
+        // Further reduce dimensions if file is still large
+        if (width * height > 500000) { // 500k pixels
+          const scale = Math.sqrt(500000 / (width * height));
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
+        
+        // Use better image smoothing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Compress as JPEG with reduced quality
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        // Compress with lower quality (0.3 instead of 0.6)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.1);
         resolve(compressedBase64);
       };
     });
@@ -293,6 +311,50 @@ const PetScreen = () => {
     );
   };
 
+  useEffect(() => {
+    const fetchPetData = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/petData');
+        const data = await response.json();
+        setPetData(data);
+        setFilteredSpecies(data.species);
+        setFilteredBreeds(data.breeds.Dog.concat(data.breeds.Cat)); // Combine all breeds initially
+        setFilteredSpecialNeeds(data.specialNeeds);
+      } catch (error) {
+        console.error('Error fetching pet data:', error);
+      }
+    };
+    fetchPetData();
+  }, []);
+
+  const handleSpeciesSearch = (value) => {
+    setFormData(prev => ({ ...prev, petSpecies: value }));
+    if (petData) {
+      setFilteredSpecies(petData.species.filter(species => 
+        species.toLowerCase().includes(value.toLowerCase())
+      ));
+    }
+  };
+
+  const handleBreedSearch = (value) => {
+    setFormData(prev => ({ ...prev, petBreed: value }));
+    if (petData) {
+      const allBreeds = Object.values(petData.breeds).flat();
+      setFilteredBreeds(allBreeds.filter(breed => 
+        breed.toLowerCase().includes(value.toLowerCase())
+      ));
+    }
+  };
+
+  const handleSpecialNeedsSearch = (value) => {
+    setFormData(prev => ({ ...prev, petSpecialNeeds: value }));
+    if (petData) {
+      setFilteredSpecialNeeds(petData.specialNeeds.filter(need => 
+        need.toLowerCase().includes(value.toLowerCase())
+      ));
+    }
+  };
+
   return (
     <div className="pet-screen">
       <div className="pet-forms-container">
@@ -342,32 +404,105 @@ const PetScreen = () => {
                 placeholder="Age"
                 required
               />
-              <input
-                type="text"
-                id="petSpecies"
-                value={formData.petSpecies}
-                onChange={handleInputChange}
-                placeholder="Species"
-                required
-              />
-              <input
-                type="text"
-                id="petBreed"
-                value={formData.petBreed}
-                onChange={handleInputChange}
-                placeholder="Breed"
-                required
-              />
+              <div className="input-field">
+                <input
+                  type="text"
+                  id="petSpecies"
+                  value={formData.petSpecies}
+                  onChange={(e) => handleSpeciesSearch(e.target.value)}
+                  onClick={() => setShowSpeciesDropdown(true)}
+                  placeholder="Species"
+                  required
+                />
+                <Icon 
+                  icon="mdi:chevron-down" 
+                  className="dropdown-icon"
+                  onClick={() => setShowSpeciesDropdown(!showSpeciesDropdown)}
+                />
+                {showSpeciesDropdown && (
+                  <div className="dropdown-list">
+                    {filteredSpecies.map((species, index) => (
+                      <div 
+                        key={index}
+                        className="dropdown-item"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, petSpecies: species }));
+                          setShowSpeciesDropdown(false);
+                        }}
+                      >
+                        {species}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="input-field">
+                <input
+                  type="text"
+                  id="petBreed"
+                  value={formData.petBreed}
+                  onChange={(e) => handleBreedSearch(e.target.value)}
+                  onClick={() => setShowBreedDropdown(true)}
+                  placeholder="Breed"
+                  required
+                />
+                <Icon 
+                  icon="mdi:chevron-down" 
+                  className="dropdown-icon"
+                  onClick={() => setShowBreedDropdown(!showBreedDropdown)}
+                />
+                {showBreedDropdown && (
+                  <div className="dropdown-list">
+                    {filteredBreeds.map((breed, index) => (
+                      <div 
+                        key={index}
+                        className="dropdown-item"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, petBreed: breed }));
+                          setShowBreedDropdown(false);
+                        }}
+                      >
+                        {breed}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="additional-info-container">
-              <input
-                type="text"
-                id="petSpecialNeeds"
-                value={formData.petSpecialNeeds}
-                onChange={handleInputChange}
-                placeholder="Special Needs"
-              />
+              <div className="input-field">
+                <input
+                  type="text"
+                  id="petSpecialNeeds"
+                  value={formData.petSpecialNeeds}
+                  onChange={(e) => handleSpecialNeedsSearch(e.target.value)}
+                  onClick={() => setShowSpecialNeedsDropdown(true)}
+                  placeholder="Special Needs"
+                />
+                <Icon 
+                  icon="mdi:chevron-down" 
+                  className="dropdown-icon"
+                  onClick={() => setShowSpecialNeedsDropdown(!showSpecialNeedsDropdown)}
+                />
+                {showSpecialNeedsDropdown && (
+                  <div className="dropdown-list">
+                    {filteredSpecialNeeds.map((need, index) => (
+                      <div 
+                        key={index}
+                        className="dropdown-item"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, petSpecialNeeds: need }));
+                          setShowSpecialNeedsDropdown(false);
+                        }}
+                      >
+                        {need}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <input
                 type="text"
                 id="petMedicalHistory"

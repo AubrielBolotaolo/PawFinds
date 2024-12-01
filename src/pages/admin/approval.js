@@ -19,7 +19,7 @@ function ApprovalRequests() {
       setRequests(data);
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Failed to load approval requests');
+      toast.error('Failed to load requests');
     }
   };
 
@@ -91,18 +91,26 @@ function ApprovalRequests() {
                   </button>
                 </td>
                 <td className="action-buttons">
-                  <button
-                    className="accept-btn"
-                    onClick={() => handleAction(request.id, 'accept')}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    className="decline-btn"
-                    onClick={() => handleAction(request.id, 'decline')}
-                  >
-                    Decline
-                  </button>
+                  {request.status === 'pending' ? (
+                    <>
+                      <button
+                        className="accept-btn"
+                        onClick={() => handleAction(request.id, 'accept')}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        className="decline-btn"
+                        onClick={() => handleAction(request.id, 'decline')}
+                      >
+                        Decline
+                      </button>
+                    </>
+                  ) : (
+                    <span className={`status-badge ${request.status}`}>
+                      {request.status === 'approved' ? 'Approved' : 'Declined'}
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}

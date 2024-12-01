@@ -7,7 +7,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -87,14 +87,14 @@
 
 .login-form .input-field {
   position: relative;
-  width: 100%;
+  width: 110%;
   max-width: 300px;
   margin: 5px 0;
 }
 
 .signup-form .input-field {
   position: relative;
-  width: 80%;
+  width: 98%;
   max-width: 300px;
   margin: 10px 0;
 }
@@ -114,10 +114,21 @@
   box-shadow: 0 0 0 2px rgba(26, 43, 75, 0.1);
 }
 
-.input-field .icon {
+.login-form .input-field .icon {
   position: absolute;
-  right: -20%;
-  top: 40%;
+  right: -5%;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #000;
+  cursor: pointer;
+  width: 8.5%;
+  height: auto;
+}
+
+.signup-form .input-field .icon {
+  position: absolute;
+  right: -5%;
+  top: 50%;
   transform: translateY(-50%);
   color: #000;
   cursor: pointer;
@@ -426,4 +437,326 @@
   transform: translateY(-50%);
   cursor: pointer;
   color: #000;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.forgot-password-modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+}
+
+.verification-method h2 {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.verification-method p {
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.verification-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.verification-buttons button {
+  width: 100%;
+  padding: 1rem;
+  text-align: left;
+  border: 1px solid #000;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #000;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s;
+}
+
+.verification-buttons button:hover {
+  background-color: #BBDEFB;
+}
+
+/* Rest of the modal styles for other states */
+.verification-form,
+.otp-form,
+.new-password-form {
+  margin-top: 1rem;
+}
+
+.verification-form input,
+.otp-form input,
+.new-password-form input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+
+.verification-form button,
+.otp-form button,
+.new-password-form button,
+.success-message button {
+  width: 100%;
+  padding: 12px;
+  background-color: #000;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.otp-form {
+    padding: 1rem;
+}
+
+.otp-form h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.otp-form p {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.otp-form .sent-to {
+    color: #000;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+}
+
+.otp-input-container {
+    display: flex;
+    justify-content: space-between;
+    margin: 1.5rem 0;
+}
+
+.otp-input-container input {
+    width: 25px;
+    height: 25px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.2rem;
+    background-color: #E3F2FD;
+    outline: none;
+}
+
+.otp-input-container input:focus {
+    border-color: #2196F3;
+    background-color: #BBDEFB;
+}
+
+.resend-timer {
+    text-align: center;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+}
+
+.resend-timer .timer {
+    color: #FF0000;
+}
+
+.verify-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: #000;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 1rem;
+    transition: background-color 0.3s;
+}
+
+.verify-btn:hover {
+    background-color: #333;
+}
+
+/* Update modal styles */
+.forgot-password-modal {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+}
+
+/* Make inputs consistent */
+.verification-form input,
+.new-password-form input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #E3F2FD;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.verification-form input:focus,
+.new-password-form input:focus {
+    border-color: #2196F3;
+    background-color: #BBDEFB;
+    outline: none;
+}
+
+/* Add/Update these styles */
+.new-password-form {
+    padding: 1rem;
+}
+
+.new-password-form h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.new-password-form p {
+    color: #666;
+    margin-bottom: 1.5rem;
+}
+
+.password-input-container {
+    position: relative;
+    margin-bottom: -0.5rem;
+}
+
+.password-input-container input {
+    width: 95%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: #E3F2FD;
+    font-size: 1rem;
+    color: #666;
+}
+
+.password-input-container input:focus {
+    outline: none;
+    background-color: #BBDEFB;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 35%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #666;
+    font-size: 20px;
+}
+
+.update-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: #000;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-top: 1.5rem;
+    transition: background-color 0.3s;
+}
+
+.update-btn:hover {
+    background-color: #333;
+}
+
+/* Update placeholder color */
+.password-input-container input::placeholder {
+    color: #666;
+}
+
+/* Remove default password reveal button in some browsers */
+.password-input-container input::-ms-reveal,
+.password-input-container input::-ms-clear {
+    display: none;
+}
+
+/* Success message styles */
+.success-message {
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    border: 2px solid #000;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.check-icon {
+    font-size: 40px;
+    color: #000;
+}
+
+.success-message h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #000;
+}
+
+.success-message p {
+    color: #666;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+}
+
+.proceed-btn {
+    background-color: #000;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.proceed-btn:hover {
+    background-color: #333;
 }

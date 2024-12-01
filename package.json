@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@react-google-maps/api": "^2.20.3",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^13.0.0",
     "@testing-library/user-event": "^13.2.1",
@@ -24,8 +25,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "server": "json-server --watch ./data/db.json --port 3001",
-    "server-pet": "json-server --watch ./data/pet.json --port 3002"
+    "server": "json-server --watch data/db.json --port 3001",
+    "media-server": "json-server --watch data/media.json --port 3002"
   },
   "eslintConfig": {
     "extends": [
