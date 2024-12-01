@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import PetScreen from './PetScreen';
 import AppointmentScreen from './AppointmentScreen';
 import LogScreen from './LogScreen';
+import Profile from './Profile';
+import ClinicScreen from './ClinicScreen';
 
 function HomeScreen() {
   const navigate = useNavigate();
@@ -19,11 +21,12 @@ function HomeScreen() {
   const [activeNavItem, setActiveNavItem] = useState(
     location.state?.activeNavItem || 'dashboard'
   );
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navItems = [
     { id: 'home', icon: 'mdi:home', label: 'Home' },
     { id: 'pets', icon: 'mdi:paw', label: 'My Pets' },
     { id: 'appointment', icon: 'mdi:calendar', label: 'Book Appointment' },
-    { id: 'map', icon: 'mdi:map-marker', label: 'Map' },
+    { id: 'clinic', icon: 'mdi:heart-pulse', label: 'Clinic' },
     { id: 'logs', icon: 'mdi:calendar-clock', label: 'Appointment Logs' }
   ];
   const getPageTitle = () => {
@@ -124,6 +127,8 @@ function HomeScreen() {
           <AppointmentScreen />
         ) : activeScreen === 'logs' ? (
           <LogScreen />
+        ) : activeScreen === 'clinic' ? (
+          <ClinicScreen />
         ) : (
           <div className="welcome-card">
             <div className="welcome-text">
@@ -162,11 +167,17 @@ function HomeScreen() {
               {userRole === 'veterinarian' ? 'Veterinarian' : 'Fur Parent'}
             </span>
           </div>
-          <div className="avatar">
-            <Icon icon="mdi:account-circle" className="icon"/>
+          <div className="avatar" onClick={() => setIsProfileOpen(true)}>
+            {userData?.profilePhoto ? (
+              <img src={userData.profilePhoto} alt="Profile" className="profile-photo" />
+            ) : (
+              <Icon icon="mdi:account-circle" className="icon"/>
+            )}
           </div>
         </div>
       </div>
+
+      <Profile isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </div>
   );
 }

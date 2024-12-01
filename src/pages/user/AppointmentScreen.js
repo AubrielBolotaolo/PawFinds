@@ -29,6 +29,8 @@ function AppointmentScreen() {
   const navigate = useNavigate();
   const [currentClinicPage, setCurrentClinicPage] = useState(0);
   const CLINICS_PER_PAGE = 4;
+  const [selectedCareServices, setSelectedCareServices] = useState([]);
+  const [symptomsNotes, setSymptomsNotes] = useState('');
 
   const handleConfirmAppointment = async () => {
     try {
@@ -171,11 +173,30 @@ function AppointmentScreen() {
     { id: 'breathing', label: 'Breathing difficulties', description: '(rapid or labored breathing)' },
   ];
 
+  const careServices = [
+    { id: 'grooming', label: 'Pet Grooming', description: 'Bath, haircut, nail trimming, and ear cleaning' },
+    { id: 'dental', label: 'Dental Care', description: 'Teeth cleaning and oral hygiene' },
+    { id: 'spa', label: 'Pet Spa', description: 'Relaxing treatments and massages' },
+    { id: 'boarding', label: 'Pet Boarding', description: 'Short-term pet accommodation' },
+    { id: 'daycare', label: 'Day Care', description: 'Supervised daily pet care' },
+    { id: 'training', label: 'Pet Training', description: 'Behavior training and socialization' },
+    { id: 'nutrition', label: 'Nutrition Consultation', description: 'Diet planning and advice' },
+    { id: 'exercise', label: 'Exercise Program', description: 'Physical activity and fitness routines' },
+  ];
+
   const handleSymptomToggle = (symptomId) => {
     setSelectedSymptoms(prev => 
       prev.includes(symptomId)
         ? prev.filter(id => id !== symptomId)
         : [...prev, symptomId]
+    );
+  };
+
+  const handleCareServiceToggle = (serviceId) => {
+    setSelectedCareServices(prev => 
+      prev.includes(serviceId)
+        ? prev.filter(id => id !== serviceId)
+        : [...prev, serviceId]
     );
   };
 
@@ -216,35 +237,41 @@ function AppointmentScreen() {
   };
 
   const isDateWithinClinicSchedule = (date) => {
-    if (!selectedClinic?.clinic?.schedule?.days) {
-      return false;
+    if (!selectedClinic?.clinic?.schedule?.days?.start || !selectedClinic?.clinic?.schedule?.days?.end) {
+        return false;
     }
 
-    // Get clinic schedule
     const { start: startDay, end: endDay } = selectedClinic.clinic.schedule.days;
     
-    // Map for converting day names to numbers (0-6)
     const dayToNumber = {
-      'Sunday': 0, 'Sun': 0,
-      'Monday': 1, 'Mon': 1,
-      'Tuesday': 2, 'Tue': 2,
-      'Wednesday': 3, 'Wed': 3,
-      'Thursday': 4, 'Thu': 4,
-      'Friday': 5, 'Fri': 5,
-      'Saturday': 6, 'Sat': 6
+        'Sunday': 0, 'Sun': 0,
+        'Monday': 1, 'Mon': 1,
+        'Tuesday': 2, 'Tue': 2,
+        'Wednesday': 3, 'Wed': 3,
+        'Thursday': 4, 'Thu': 4,
+        'Friday': 5, 'Fri': 5,
+        'Saturday': 6, 'Sat': 6
     };
 
-    // Get numeric values
     const clinicStartDay = dayToNumber[startDay];
     const clinicEndDay = dayToNumber[endDay];
     const currentDayOfWeek = date.getDay();
 
-    // Handle week wrap-around (e.g., Saturday to Wednesday)
     if (clinicStartDay <= clinicEndDay) {
-      return currentDayOfWeek >= clinicStartDay && currentDayOfWeek <= clinicEndDay;
+        return currentDayOfWeek >= clinicStartDay && currentDayOfWeek <= clinicEndDay;
     } else {
-      return currentDayOfWeek >= clinicStartDay || currentDayOfWeek <= clinicEndDay;
+        return currentDayOfWeek >= clinicStartDay || currentDayOfWeek <= clinicEndDay;
     }
+  };
+
+  // Helper function to convert 24h to 12h format (add this near your other helper functions)
+  const convertTo12Hour = (time24) => {
+    if (!time24) return '';
+    const [hours, minutes] = time24.split(':');
+    const hour = parseInt(hours);
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${period}`;
   };
 
   const renderContent = () => {
@@ -349,7 +376,7 @@ function AppointmentScreen() {
                   setStep('symptoms');
                 } else {
                   // Navigate to care services page
-                  navigate('/care-services');
+                  setStep('care-services');
                 }
               }}
             >
@@ -358,21 +385,52 @@ function AppointmentScreen() {
           </div>
         );
 
+      case 'care-services':
+        return (
+          <div className="care-services-section">
+            <h2>SELECT CARE SERVICES</h2>
+            <p>Choose the services you'd like for your pet. Select all that apply.</p>
+            
+            <div className="care-services-grid">
+              {careServices.map(service => (
+                <div
+                  key={service.id}
+                  className={`care-service-box ${selectedCareServices.includes(service.id) ? 'selected' : ''}`}
+                  onClick={() => handleCareServiceToggle(service.id)}
+                >
+                  <h3>{service.label}</h3>
+                  <p className="description">{service.description}</p>
+                </div>
+              ))}
+            </div>
+
+            <button 
+              className="next-button"
+              disabled={selectedCareServices.length === 0}
+              onClick={() => setStep('clinic-selection')}
+            >
+              Next
+            </button>
+          </div>
+        );
+
       case 'symptoms':
         return (
-          <div className="symptoms-section">
-            <h2>PET ENCOUNTERED SYMPTOMS</h2>
-            <p>Select the box if your pet encountered the given symptoms. Select all that apply.</p>
+          <div className="care-services-section">
+            <h2>SELECT PET SYMPTOMS</h2>
+            <p>Choose the symptoms your pet is experiencing. Select all that apply.</p>
             
-            <div className="symptoms-grid">
+            <div className="care-services-grid">
               {symptoms.map(symptom => (
                 <div
                   key={symptom.id}
-                  className={`symptom-box ${selectedSymptoms.includes(symptom.id) ? 'selected' : ''}`}
+                  className={`care-service-box ${selectedSymptoms.includes(symptom.id) ? 'selected' : ''}`}
                   onClick={() => handleSymptomToggle(symptom.id)}
                 >
-                  {symptom.label}
-                  {symptom.description && <span className="description">{symptom.description}</span>}
+                  <h3>{symptom.label}</h3>
+                  {symptom.description && (
+                    <p className="description">{symptom.description}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -380,11 +438,14 @@ function AppointmentScreen() {
             <textarea
               className="symptoms-notes"
               placeholder="Provide more information of your pet's symptoms..."
+              value={symptomsNotes}
+              onChange={(e) => setSymptomsNotes(e.target.value)}
               rows={4}
             />
 
             <button 
               className="next-button"
+              disabled={selectedSymptoms.length === 0}
               onClick={() => setStep('clinic-selection')}
             >
               Next
@@ -424,7 +485,8 @@ function AppointmentScreen() {
                       <>
                         <p>
                           <Icon icon="mdi:clock-outline" />
-                          {clinic.clinic.schedule.hours?.open} - {clinic.clinic.schedule.hours?.close}
+                          {convertTo12Hour(clinic.clinic.schedule.hours?.open)} - 
+                          {convertTo12Hour(clinic.clinic.schedule.hours?.close)}
                         </p>
                         <p>
                           <Icon icon="mdi:calendar" />
@@ -488,93 +550,86 @@ function AppointmentScreen() {
 
       case 'schedule':
         return (
-          <div className="schedule-booking">
-            <div className="schedule-grid">
-              <div className="booking-section">
-                <h2>Book Schedule</h2>
-                <p>Select your available appointment date and time.</p>
+          <div className="schedule-cards">
+            <div className="booking-card">
+              <h2>BOOK SCHEDULE</h2>
+              <p>Select your available appointment date and time.</p>
 
-                <div className="calendar-container">
-                  <Calendar
-                    onChange={(date) => {
-                      // Check if clinic schedule exists
-                      if (!selectedClinic?.clinic?.schedule?.days) {
-                        toast.error('Clinic schedule not available');
-                        return;
-                      }
+              <div className="calendar-container">
+                <Calendar
+                  onChange={(date) => {
+                    if (!selectedClinic?.clinic?.schedule?.days) {
+                      toast.error('Clinic schedule not available');
+                      return;
+                    }
 
-                      // Check if selected date is within clinic's working days
-                      if (isDateWithinClinicSchedule(date)) {
-                        setSelectedDate(date);
-                      } else {
-                        const { start, end } = selectedClinic.clinic.schedule.days;
-                        toast.error(`This clinic only operates from ${start} to ${end}`);
-                      }
-                    }}
-                    value={selectedDate}
-                    minDate={new Date()}
-                    tileDisabled={({ date }) => {
-                      // Disable dates not within clinic schedule
-                      return !isDateWithinClinicSchedule(date);
-                    }}
-                    tileClassName={({ date }) => {
-                      // Optional: Add custom class for available dates
-                      return isDateWithinClinicSchedule(date) ? 'available-date' : '';
-                    }}
-                    view="month"
-                  />
-                </div>
-
-                <div className="time-picker-container">
-                  <label>Time</label>
-                  <TimePicker
-                    onChange={setSelectedTime}
-                    value={selectedTime}
-                    format="HH:mm"
-                    clearIcon={null}
-                    disableClock={true}
-                    minTime={selectedClinic?.clinic.schedule.hours.open}
-                    maxTime={selectedClinic?.clinic.schedule.hours.close}
-                  />
-                </div>
-
-                <button 
-                  className="next-button"
-                  disabled={!selectedDate || !selectedTime || !isWithinWorkingHours(selectedTime)}
-                  onClick={() => setStep('confirmation')}
-                >
-                  Next
-                </button>
+                    if (isDateWithinClinicSchedule(date)) {
+                      setSelectedDate(date);
+                    } else {
+                      const { start, end } = selectedClinic.clinic.schedule.days;
+                      toast.error(`This clinic only operates from ${start} to ${end}`);
+                    }
+                  }}
+                  value={selectedDate}
+                  minDate={new Date()}
+                  tileDisabled={({ date }) => !isDateWithinClinicSchedule(date)}
+                  tileClassName={({ date }) => isDateWithinClinicSchedule(date) ? 'available-date' : ''}
+                  view="month"
+                />
               </div>
 
-              <div className="selected-clinic-card">
-                <h3>Selected Clinic</h3>
-                <div className="clinic-details">
-                  <img 
-                    src={selectedClinic?.clinic?.photo || 'default-clinic-image.jpg'} 
-                    alt={selectedClinic?.clinic?.name}
-                    className="selected-clinic-image"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = 'default-clinic-image.jpg';
-                    }}
-                  />
-                  <div className="clinic-info">
-                    <h4>Clinic: {selectedClinic?.clinic.name}</h4>
-                    <p>
-                      <strong>Address:</strong> {selectedClinic?.clinic.address.street}, 
-                      {selectedClinic?.clinic.address.barangay}, {selectedClinic?.clinic.address.city}
-                    </p>
-                    <p>
-                      <strong>Working Hours:</strong> {selectedClinic?.clinic.schedule.hours.open} - {selectedClinic?.clinic.schedule.hours.close}
-                    </p>
-                    <p>
-                      <strong>Working Days:</strong> {selectedClinic?.clinic.schedule.days.start}-{selectedClinic?.clinic.schedule.days.end}
-                    </p>
-                    <p>
-                      <strong>Ratings:</strong> {selectedClinic?.clinic.ratings || '4.5'} Stars
-                    </p>
-                  </div>
+              <div className="time-picker-container">
+                <label>Time</label>
+                <TimePicker
+                  onChange={setSelectedTime}
+                  value={selectedTime}
+                  format="hh:mm a"
+                  clearIcon={null}
+                  disableClock={true}
+                  minTime={selectedClinic?.clinic.schedule.hours.open}
+                  maxTime={selectedClinic?.clinic.schedule.hours.close}
+                  amPmAriaLabel="Select AM/PM"
+                />
+              </div>
+
+              <button 
+                className="next-button"
+                disabled={!selectedDate || !selectedTime || !isWithinWorkingHours(selectedTime)}
+                onClick={() => setStep('confirmation')}
+              >
+                Next
+              </button>
+            </div>
+
+            <div className="selected-clinic-card">
+              <h3>SELECTED CLINIC</h3>
+              <div className="clinic-details">
+                <img 
+                  src={selectedClinic?.clinic?.photo || 'default-clinic-image.jpg'} 
+                  alt={selectedClinic?.clinic?.name}
+                  className="selected-clinic-image"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = 'default-clinic-image.jpg';
+                  }}
+                />
+                <div className="clinic-info">
+                  <h4>Clinic: {selectedClinic?.clinic.name}</h4>
+                  <p>
+                    <strong>Address:</strong> {selectedClinic?.clinic.address.street}, 
+                    {selectedClinic?.clinic.address.barangay}, {selectedClinic?.clinic.address.city}
+                  </p>
+                  <p>
+                    <strong>Working Hours:</strong> 
+                    {convertTo12Hour(selectedClinic?.clinic.schedule.hours.open)} - 
+                    {convertTo12Hour(selectedClinic?.clinic.schedule.hours.close)}
+                  </p>
+                  <p>
+                    <strong>Working Days:</strong> {selectedClinic?.clinic?.schedule?.days?.start}-{selectedClinic?.clinic?.schedule?.days?.end}
+                  </p>
+                  <p>
+                    <strong>Ratings:</strong> {selectedClinic?.clinic.ratings || '4.5'} Stars
+                  </p>
                 </div>
               </div>
             </div>
@@ -594,7 +649,7 @@ function AppointmentScreen() {
 
         return (
           <div className="confirmation-section">
-            <h2>Confirm Your Appointment</h2>
+            <h2>CONFIRMATION</h2>
             
             <div className="header-container">
               <div className="date-badge">
@@ -620,7 +675,11 @@ function AppointmentScreen() {
 
                 <div className="detail-item">
                   <Icon icon="mdi:clock-outline" />
-                  {selectedTime} <span className="hours-note">(Open Hours: {selectedClinic?.clinic?.schedule?.hours?.open} - {selectedClinic?.clinic?.schedule?.hours?.close})</span>
+                  {selectedTime && convertTo12Hour(selectedTime)}
+                  <span className="hours-note">
+                    (Open Hours: {convertTo12Hour(selectedClinic?.clinic?.schedule?.hours?.open)} - 
+                    {convertTo12Hour(selectedClinic?.clinic?.schedule?.hours?.close)})
+                  </span>
                 </div>
 
                 <div className="detail-item">
@@ -650,14 +709,6 @@ function AppointmentScreen() {
               </div>
               <h2>Successfully Scheduled!</h2>
               <p>Your appointment is now being scheduled successfully. Don't forget your appointment, Fur Parent!</p>
-              <button 
-                className="view-appointments-button"
-                onClick={() => {
-                  navigate('/HomeScreen', { state: { activeNavItem: 'appointment-logs' } });
-                }}
-              >
-                View My Appointments
-              </button>
             </div>
           </div>
         );
@@ -673,9 +724,13 @@ function AppointmentScreen() {
 
   return (
     <div className="appointment-container">
-      <div className="fur-patient-section">
-        {renderContent()}
-      </div>
+      {step === 'schedule' ? (
+        renderContent()
+      ) : (
+        <div className="fur-patient-section">
+          {renderContent()}
+        </div>
+      )}
     </div>
   );
 }
