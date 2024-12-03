@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import '../../styles/consultation.css';
 
 function ConsultationForm() {
     const [patients, setPatients] = useState([]);
@@ -64,7 +65,7 @@ function ConsultationForm() {
 
     return (
         <div className="consultation-form">
-            <h2>New Consultation Record</h2>
+            <h2>NEW CONSULTATION RECORD</h2>
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
                     <label>Select Patient:</label>

@@ -10,17 +10,21 @@ import LandingPage from './pages/LandingPage';
 import HomeScreen from './pages/user/HomeScreen';
 import AdminDashboard from './pages/admin/dashboard';
 import VetDashboard from './pages/vet/vetDashboard';
+import Preloader from './pages/Preloader';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/HomeScreen" element={<HomeScreen />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/vet/vetDashboard" element={<VetDashboard />} />
-      </Routes>
-    </Router>
+    <>
+      <Preloader />
+      <Router>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/HomeScreen" element={<HomeScreen />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/vet/vetDashboard" element={<VetDashboard />} />
+        </Routes>
+      </Router>
+    </>
   );
 }
 
