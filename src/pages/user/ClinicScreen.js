@@ -133,7 +133,7 @@ const ClinicScreen = () => {
                 <div className="info-section">
                   <h3>Services</h3>
                   <ul>
-                    {selectedClinic.clinic.services.map((service, index) => (
+                    {selectedClinic.clinic?.services?.map((service, index) => (
                       <li key={index}>{service}</li>
                     ))}
                   </ul>

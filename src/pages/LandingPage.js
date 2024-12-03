@@ -131,7 +131,7 @@ function Offers() {
 
 function About() {
     return (
-        <section className="about">
+        <section className="about" id='about'>
             <div className='about-content'>
                 <h2>Know more about our website</h2>
                 <p>Pet Finds is designed to simplify pet care by offering a seamless way for pet owners to connect with nearby vet clinics. Book appointments and access expert advice for your pet's health. Whether it's routine care or an emergency, we're here to ensure your pets receive the attention they deserve.</p>
@@ -148,7 +148,7 @@ function About() {
 
 function Contact() {
     return (
-        <div className="team-intro-container">
+        <div className="team-intro-container" id='contact'> 
             <h2>Keep in touch with the core team behind</h2>
             <p>Stay connected with the passionate team behind Paw Finds, dedicated to
             making pet care easier and more accessible for you and your furry companions.
