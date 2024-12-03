@@ -7,6 +7,7 @@ import Image from '../assets/logo.png';
 import AppointmentRequests from './appointment';
 import FurPatients from './patient';
 import VetProfile from './vetProfile';
+import ConsultationForm from './consultationForm';
 
 
 function VetDashboard() {
@@ -107,6 +108,14 @@ function VetDashboard() {
                 </div>
 
                 <div 
+                    className={`nav-item ${activeView === 'consultation' ? 'active' : ''}`}
+                    onClick={() => setActiveView('consultation')}
+                >
+                    <Icon icon="mdi:stethoscope" className="icon" />
+                    New Consultation
+                </div>
+
+                <div 
                     className={`nav-item ${activeView === 'patients' ? 'active' : ''}`}
                     onClick={() => setActiveView('patients')}
                 >
@@ -166,6 +175,8 @@ function VetDashboard() {
                     </div>
                 ) : activeView === 'appointments' ? (
                     <AppointmentRequests />
+                ) : activeView === 'consultation' ? (
+                    <ConsultationForm />
                 ) : (
                     <FurPatients />
                 )}

@@ -3,10 +3,41 @@ import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 import '../../styles/appointments.css';
 
+function PatientDetailsModal({ appointment, onClose }) {
+    if (!appointment) return null;
+
+    return (
+        <div className="medical-history-modal">
+            <div className="modal-content">
+                <div className="modal-header">
+                    <h3>Fur Patient Information</h3>
+                    <button className="close-button" onClick={onClose}>×</button>
+                </div>
+                <div className="modal-body">
+                    <div className="patient-details-section">
+                        <h4>Pet Information</h4>
+                        <p><strong>Name:</strong> {appointment.petName}</p>
+                        <p><strong>Breed:</strong> {appointment.petBreed}</p>
+                        <p><strong>Owner:</strong> {appointment.ownerName}</p>
+                    </div>
+                    <div className="appointment-details-section">
+                        <h4>Appointment Details</h4>
+                        <p><strong>Service:</strong> {appointment.service}</p>
+                        <p><strong>Symptoms:</strong> {appointment.symptoms.join(', ')}</p>
+                        <p><strong>Date:</strong> {new Date(appointment.date).toLocaleDateString()}</p>
+                        <p><strong>Time:</strong> {appointment.time}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 function AppointmentRequests() {
     const [appointments, setAppointments] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [selectedAppointment, setSelectedAppointment] = useState(null);
 
     useEffect(() => {
         fetchAppointments();
@@ -182,6 +213,13 @@ function AppointmentRequests() {
 
     return (
         <div className="appointments-container">
+            {selectedAppointment && (
+                <PatientDetailsModal 
+                    appointment={selectedAppointment}
+                    onClose={() => setSelectedAppointment(null)}
+                />
+            )}
+            
             {/* Search Bar */}
             <div className="search-bar">
                 <Icon icon="mdi:magnify" className="search-icon" />
@@ -202,6 +240,7 @@ function AppointmentRequests() {
                             <th>Fur Parent</th>
                             <th>Breed</th>
                             <th>Fur Patient</th>
+                            <th>Details</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -222,6 +261,14 @@ function AppointmentRequests() {
                                     <td>{appointment.ownerName}</td>
                                     <td>{appointment.petBreed}</td>
                                     <td>{appointment.petName}</td>
+                                    <td>
+                                        <button 
+                                            className="view-btn"
+                                            onClick={() => setSelectedAppointment(appointment)}
+                                        >
+                                            View
+                                        </button>
+                                    </td>
                                     <td>
                                         <span className={`status-badge ${appointment.status}`}>
                                             {appointment.status}
